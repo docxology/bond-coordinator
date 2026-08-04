@@ -64,6 +64,7 @@ src/bond_coordinator/
     __init__.py             public API
 scripts/
     status_report.py        print/persist suite status (human or --json)
+    reconcile.py            merge real films' codenames + gadgets into the registry (bond-api probe)
     advance_mission.py      advance a package's phase in the persisted ledger
     build_situation_room.py regenerate output/situation_room.html
     z_generate_manuscript_variables.py  hydrate {{TOKEN}}s (runs last; z_ prefix)
