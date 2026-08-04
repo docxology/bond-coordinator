@@ -25,7 +25,10 @@ BOND = Path(__file__).resolve().parents[2]
 
 def test_override_codenames_applies_real_codenames(sample_roster) -> None:
     briefs = {
-        "goldfinger": {"codename": "OVERRIDE-ONE", "objectives": "recon the gold market"},
+        "goldfinger": {
+            "codename": "OVERRIDE-ONE",
+            "objectives": "recon the gold market",
+        },
         "skyfall": {"codename": "OVERRIDE-TWO", "objectives": "cyber ops"},
     }
     reconciled = override_codenames(sample_roster, briefs)
@@ -65,7 +68,12 @@ def test_harvest_gadgets_merges_and_is_idempotent() -> None:
     # Re-running with the same payload replaces in place (no duplicate rows).
     registry = harvest_gadgets(
         registry,
-        {"goldfinger": {"market_corner": "corner the gold market", "laser_threat": "burn-through"}},
+        {
+            "goldfinger": {
+                "market_corner": "corner the gold market",
+                "laser_threat": "burn-through",
+            }
+        },
     )
     rows = registry.for_film("goldfinger")
     assert {g.name for g in rows} == {"market_corner", "laser_threat"}
@@ -94,18 +102,27 @@ _REAL_FILMS_READY = all(
 )
 
 
-@pytest.mark.skipif(not _REAL_FILMS_READY, reason="real film packages not built yet (Phase 2)")
+@pytest.mark.skipif(
+    not _REAL_FILMS_READY, reason="real film packages not built yet (Phase 2)"
+)
 def test_reconcile_cli_against_real_films(tmp_path: Path) -> None:
     """The thin CLI reconciles real films: real codenames + gadgets on stdout."""
     import subprocess
     import sys
 
     result = subprocess.run(
-        [sys.executable, str(BOND / "bond-coordinator" / "scripts" / "reconcile.py"),
-         "--slugs", *REAL_FILMS, "--write", str(tmp_path / "reconciled.json")],
+        [
+            sys.executable,
+            str(BOND / "bond-coordinator" / "scripts" / "reconcile.py"),
+            "--slugs",
+            *REAL_FILMS,
+            "--write",
+            str(tmp_path / "reconciled.json"),
+        ],
         capture_output=True,
         text=True,
         cwd=str(BOND / "bond-coordinator"),
+        check=False,
     )
     assert result.returncode == 0, result.stderr
     for slug in REAL_FILMS:
