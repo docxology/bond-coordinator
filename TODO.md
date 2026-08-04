@@ -5,29 +5,26 @@ the BOND suite.  Local-only working tree; no remote.
 
 ## Status
 
-- Phase 1 build complete and green: registry + ledger + status + situation
-  room + manuscript variables, all with a zero-mock real-data test suite.
-- Verified: `uv run pytest tests/ --cov=src --cov-fail-under=90` passes
-  (coverage well above the 90% gate); `ruff check`, `ruff format --check`, and
-  `mypy` clean on `src/bond_coordinator` and `scripts/`.
+- **Phase 4 (deep improvement) green**: ledger transition validation + audit
+  summaries (`validate_transition`, `transition_summary`, `per_agent_summary`,
+  `phase_timeline`); status per-layer summaries (`SUITE_LAYERS`,
+  `LayerSummary`, `build_status(layer_ready=)`); situation room deepened with
+  coverage heat, mission-timeline bars, per-film gadget groups, suite-layers
+  and recent-transitions sections.  Reconcile (refresh/replace) untouched.
+- Verified: `uv run pytest tests/ --cov=src --cov-fail-under=90` passes ~99%
+  coverage; `ruff check`/`ruff format --check`/`mypy` clean; 0 mocks, 0
+  failures, 0 skipped.
 
-## Integration points (dependencies not yet built)
+## Integration points
 
-`bond-coordinator` depends on `bond-api` (Layer 1) and `bond-utilities`
-(Layer 0), neither of which is built yet.  As instructed, this package ships a
-**pure-core** implementation and defers integration:
+`bond-coordinator` depends on `bond-api` (Layer 1, **built** — drives
+`scripts/reconcile.py` discovery) and `bond-utilities` (Layer 0, not yet
+built).  Unfinished integration:
 
-1. **Protocol types** (`bond-api`).  `src/bond_coordinator/types.py` carries a
-   pure-core mirror of the Layer-1 shapes (`Asset`, `Gadget`, `GadgetRegistry`,
-   `PackageStatus`, `MissionPhase`) with identical field names/semantics per
-   `SCOPE.md` §3.2.  **When `bond-api` lands**, swap `registry.py`/`types.py`
-   to import from `bond_api.registry` — the swap is a single import and changes
-   no public API.  The runtime probe in `scripts/{status_report,build_situation_room}.py`
-   already reports `dependency_ready` and flips on automatically.
-2. **Provenance I/O** (`bond-utilities`).  `MissionLedger.to_json/from_json`
-   and the `scripts/advance_mission.py` persistence are local stdlib
-   equivalents of `bond-utilities` `mission_io`.  When available, route ledger
-   persistence through `mission_io` for shared provenance conventions.
+1. **Provenance I/O** (`bond-utilities`).  `MissionLedger.to_json/from_json`
+   and `scripts/advance_mission.py` persistence are local stdlib equivalents
+   of `bond-utilities` `mission_io`.  When available, route ledger persistence
+   through `mission_io` for shared provenance conventions.
 
 ## Roadmap
 
@@ -39,12 +36,11 @@ the BOND suite.  Local-only working tree; no remote.
 - [x] Thin `scripts/` (status_report, advance_mission, build_situation_room, z_generate_manuscript_variables).
 - [x] Zero-mock, deterministic test suite (5-film fixture + full-registry checks).
 - [x] Re-identity: README, AGENTS, TODO, docs, manuscript, CITATION, domain/experiment overlays.
-- [ ] Wire real `bond-api` registry types when Layer 1 is built (see above).
+- [x] `src/bond_coordinator/reconcile.py` + `scripts/reconcile.py` — merge real films' codenames + gadgets (refresh/replace).
+- [x] **Phase 4** ledger validation + audit summaries; status per-layer summaries; situation room coverage heat / mission timeline / per-film gadgets / layers section / audit tail.
+- [x] **Phase 4** live `{{TOKEN}}` cross-reference gate over numbered manuscript sections.
 - [ ] Route ledger provenance through `bond-utilities` `mission_io`.
-- [ ] Consume `bond-ops` aggregate gate output to update `registry.py`
-      status/coverage (currently all packages are honest `scaffolded`/`None`).
-- [ ] Supply-recorded gadget inventory from film packages into the situation room
-      (currently the gadget registry is fed by `output/data/gadgets.json` if present).
+- [ ] Feed per-layer infra readiness from a real fleet probe (currently `layer1` tracks `dependency_ready`; others are injectable via `layer_ready`).
 
 ## Guardrails (persistent)
 
@@ -55,3 +51,4 @@ the BOND suite.  Local-only working tree; no remote.
 - `ruff` + `mypy` clean on `src/bond_coordinator` and `scripts/`.
 - Local-only: never push to any remote (there is none).  Commit path-scoped
   inside this package only.
+

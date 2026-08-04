@@ -9,11 +9,12 @@ All time-dependent inputs are injectable so the report is reproducible.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
 
 from .ledger import MissionLedger, utcnow
-from .registry import ROSTER, PackageRecord
+from .registry import FILM_SLUGS, ROSTER, PackageRecord
 from .types import MissionPhase, PackageStatus
 
 #: Coverage gate shared by the whole suite (matches pyproject fail_under).
@@ -21,6 +22,19 @@ COVERAGE_FLOOR = 90.0
 
 #: Default age (days) after which an unfinished mission is flagged stale.
 DEFAULT_STALE_DAYS = 30
+
+#: Declared suite topology per SCOPE.md §2.2 — (layer id, human label, package
+#: slugs).  The ``films`` layer is the registry's 27-film roster; infra layers
+#: are the sibling mission-infrastructure packages (not tracked as records,
+#: but their readiness is reported by the layer summary).
+SUITE_LAYERS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
+    ("layer0", "Q-branch primitives", ("bond-utilities",)),
+    ("layer1", "The protocol", ("bond-api",)),
+    ("layer2", "Mission control", ("bond-coordinator",)),
+    ("layer3", "The DAG runner", ("bond-orchestrator",)),
+    ("layer4", "Front door & fleet ops", ("bond-cli", "bond-ops")),
+    ("films", "Film packages", FILM_SLUGS),
+)
 
 
 @dataclass(frozen=True)
@@ -50,6 +64,26 @@ class BlockedPackage:
 
 
 @dataclass(frozen=True)
+class LayerSummary:
+    """One layer of the declared suite topology, summarized for the report.
+
+    Semantics differ per layer kind: infra layers (``layer0``…``layer4``) carry
+    a ``ready`` tri-state (``True`` / ``False`` / ``None`` when not probed) and
+    a ``ready_count`` of 1 when ready; the ``films`` layer carries ``ready=None``
+    plus the registry-derived ``ready_count`` (READY films) and
+    ``coverage_mean`` (over measured films only).
+    """
+
+    layer: str
+    label: str
+    packages: tuple[str, ...]
+    ready: bool | None
+    ready_count: int
+    total: int
+    coverage_mean: float | None
+
+
+@dataclass(frozen=True)
 class SuiteStatus:
     """One deterministic snapshot of the whole fleet."""
 
@@ -61,6 +95,7 @@ class SuiteStatus:
     blocked_packages: tuple[BlockedPackage, ...]
     dependency_ready: bool  # bond-api (Layer 1) available to the fleet
     generated_at: datetime
+    layers: tuple[LayerSummary, ...] = ()
 
 
 def _coverage_summary(roster: tuple[PackageRecord, ...]) -> CoverageSummary:
@@ -101,18 +136,72 @@ def _blocked_packages(
     return tuple(blocked)
 
 
+def _layer_summaries(
+    roster: tuple[PackageRecord, ...],
+    dependency_ready: bool,
+    layer_ready: Mapping[str, bool] | None,
+) -> tuple[LayerSummary, ...]:
+    """Build one :class:`LayerSummary` per declared suite layer.
+
+    The ``films`` layer aggregates the given ``roster`` (which may be the full
+    27 or a subset fixture): tracked count, READY count, and mean coverage over
+    measured films.  Infra layers report readiness from ``layer_ready``, with a
+    sensible default: ``layer1`` (bond-api) tracks ``dependency_ready``, all
+    other infra layers default to ``None`` (not probed).
+    """
+    film_by_slug = {record.slug: record for record in roster}
+    summaries: list[LayerSummary] = []
+    for layer, label, packages in SUITE_LAYERS:
+        if layer == "films":
+            present = [film_by_slug[slug] for slug in packages if slug in film_by_slug]
+            ready_count = sum(1 for r in present if r.status is PackageStatus.READY)
+            known = [r.coverage for r in present if r.coverage is not None]
+            mean = sum(known) / len(known) if known else None
+            summaries.append(
+                LayerSummary(
+                    layer=layer,
+                    label=label,
+                    packages=tuple(record.slug for record in present),
+                    ready=None,
+                    ready_count=ready_count,
+                    total=len(present),
+                    coverage_mean=mean,
+                )
+            )
+        else:
+            ready = (layer_ready or {}).get(
+                layer, dependency_ready if layer == "layer1" else None
+            )
+            summaries.append(
+                LayerSummary(
+                    layer=layer,
+                    label=label,
+                    packages=packages,
+                    ready=ready,
+                    ready_count=1 if ready else 0,
+                    total=len(packages),
+                    coverage_mean=None,
+                )
+            )
+    return tuple(summaries)
+
+
 def build_status(
     roster: tuple[PackageRecord, ...] = ROSTER,
     ledger: MissionLedger | None = None,
     now: datetime | None = None,
     stale_days: int = DEFAULT_STALE_DAYS,
     dependency_ready: bool = False,
+    layer_ready: Mapping[str, bool] | None = None,
 ) -> SuiteStatus:
     """Assemble the fleet snapshot from registry + ledger.
 
     ``ledger`` defaults to a fresh ledger (every package at ``brief``) — the
     honest state before any mission has been run.  ``now`` and ``stale_days``
-    are injectable for deterministic reports.
+    are injectable for deterministic reports.  ``layer_ready`` optionally
+    supplies per-layer readiness for the infra layers (see
+    :func:`_layer_summaries`); when ``None``, only ``layer1`` is inferred from
+    ``dependency_ready``.
     """
     if ledger is None:
         ledger = MissionLedger(roster)
@@ -141,6 +230,7 @@ def build_status(
         blocked_packages=_blocked_packages(roster, ledger),
         dependency_ready=dependency_ready,
         generated_at=reference,
+        layers=_layer_summaries(roster, dependency_ready, layer_ready),
     )
 
 

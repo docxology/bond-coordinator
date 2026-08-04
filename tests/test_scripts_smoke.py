@@ -40,6 +40,10 @@ class TestStatusReport:
         payload = json.loads(result.stdout)
         assert payload["total"] == 27
         assert payload["counts_by_status"]["scaffolded"] == 27
+        # Per-layer summary is part of the machine-readable contract.
+        assert len(payload["layers"]) == 6
+        assert payload["layers"][-1]["layer"] == "films"
+        assert payload["layers"][-1]["total"] == 27
 
     def test_persists_status_snapshot(self) -> None:
         result = _run("status_report.py")
@@ -50,6 +54,7 @@ class TestStatusReport:
             )
         )
         assert snapshot["total"] == 27
+        assert "layers" in snapshot
 
 
 class TestBuildSituationRoom:
@@ -63,6 +68,10 @@ class TestBuildSituationRoom:
         assert "MISSION CONTROL" in html
         assert "goldfinger" in html  # every slug present
         assert "never_say_never_again" in html
+        # Deepened situation room: layers, timeline, per-film gadgets, audit.
+        assert "Suite layers" in html
+        assert "Recent transitions" in html
+        assert "coverage heat" in html.lower()
 
 
 class TestAdvanceMission:

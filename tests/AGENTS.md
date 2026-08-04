@@ -22,11 +22,12 @@ data, real computation, and real files; there is no `unittest.mock` /
 |---|---|
 | `conftest.py` | path setup + fixtures |
 | `test_registry.py` | ROSTER completeness (27), accessors, `subset_roster`, `GadgetRegistry` (+ errors) |
-| `test_ledger.py` | transitions (forward/touch/jump/backwards/past-debrief), audit trail, staleness, JSON (+ malformed/unknown) |
-| `test_status.py` | fresh vs mixed fleets, coverage summary, blocked rules, stale flags, count helpers |
-| `test_situation.py` | HTML structure, escaping, gadgets, determinism, file write |
-| `test_manuscript_variables.py` | config parsing (+ errors), tokens (full/subset), tree resolution |
-| `test_scripts_smoke.py` | thin orchestrators end-to-end; illegal transitions exit 1 |
+| `test_ledger.py` | transitions (forward/touch/jump/backwards/past-debrief), `validate_transition` + identity validation, audit summaries (`transition_summary`, `per_agent_summary`, `phase_timeline`), staleness, JSON (+ malformed/unknown/incomplete) |
+| `test_status.py` | fresh vs mixed fleets, coverage summary, blocked rules, stale flags, per-layer summaries (`SUITE_LAYERS`, `layer_ready`), count helpers |
+| `test_situation.py` | HTML structure, coverage heat buckets, mission-timeline bars, per-film gadget groups, suite-layers section, audit-trail timeline, escaping, determinism, file write |
+| `test_reconcile.py` | codename overrides, gadget harvest (refresh/idempotent), report; real-films CLI smoke |
+| `test_manuscript_variables.py` | config parsing (+ errors), tokens (full/subset, layer/ledger), tree resolution, live `{{TOKEN}}` cross-reference gate |
+| `test_scripts_smoke.py` | thin orchestrators end-to-end (incl. layers in status JSON + situation HTML); illegal transitions exit 1 |
 
 ## Running
 

@@ -19,7 +19,7 @@ import yaml
 
 from .ledger import MissionLedger
 from .registry import ROSTER, SUITE_NAME, PackageRecord
-from .status import build_status
+from .status import SUITE_LAYERS, build_status
 from .types import PackageStatus
 
 #: Lifecycle shown in prose; kept in sync with :class:`MissionPhase`.
@@ -68,7 +68,8 @@ def generate_variables(
     registry) so counts can never go stale.
     """
     config = load_config(Path(config_path))
-    status = build_status(roster, ledger=MissionLedger(roster))
+    ledger = MissionLedger(roster)
+    status = build_status(roster, ledger=ledger)
 
     ready = status.counts_by_status[PackageStatus.READY]
     building = status.counts_by_status[PackageStatus.BUILDING]
@@ -79,6 +80,7 @@ def generate_variables(
     keyword_csv = (
         ", ".join(str(item) for item in keywords) if isinstance(keywords, list) else ""
     )
+    layer_csv = ", ".join(f"{layer} ({label})" for layer, label, _ in SUITE_LAYERS)
 
     return {
         # Identity — from manuscript/config.yaml, never hand-authored in prose.
@@ -102,6 +104,10 @@ def generate_variables(
         "REGISTRY_BLOCKED_COUNT": str(len(status.blocked_packages)),
         "REGISTRY_STALE_COUNT": str(len(status.stale_packages)),
         "REGISTRY_PACKAGES_CSV": ", ".join(record.slug for record in roster),
+        # Suite topology + audit trail — derived, never hand-authored.
+        "REGISTRY_LAYER_COUNT": str(len(SUITE_LAYERS)),
+        "REGISTRY_LAYER_CSV": layer_csv,
+        "LEDGER_TRANSITION_TOTAL": str(len(ledger.history)),
     }
 
 

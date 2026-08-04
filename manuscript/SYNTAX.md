@@ -59,6 +59,9 @@ track the code.
 | `REGISTRY_COVERAGE_AT_90` | Count at/above the 90% gate |
 | `REGISTRY_BLOCKED_COUNT` / `REGISTRY_STALE_COUNT` | Blocked / stale count |
 | `REGISTRY_PACKAGES_CSV` | Comma-joined slug list |
+| `REGISTRY_LAYER_COUNT` | Number of declared suite-topology layers |
+| `REGISTRY_LAYER_CSV` | Comma-joined `layer (label)` list |
+| `LEDGER_TRANSITION_TOTAL` | Total audit-trail entries (fresh: one per registered package) |
 
 The authoritative source of truth is the return value of
 `generate_variables()`; `tests/test_manuscript_variables.py` cross-checks the

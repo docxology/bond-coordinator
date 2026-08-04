@@ -88,6 +88,19 @@ class TestGenerateVariables:
         assert variables["REGISTRY_SCAFFOLDED"] == "5"
         assert variables["REGISTRY_PACKAGES_CSV"] == ", ".join(SAMPLE_SLUGS)
 
+    def test_layer_and_ledger_tokens(self, config_path: Path) -> None:
+        variables = generate_variables(config_path)
+        assert variables["REGISTRY_LAYER_COUNT"] == "6"
+        assert "layer0 (Q-branch primitives)" in variables["REGISTRY_LAYER_CSV"]
+        assert "layer4 (Front door & fleet ops)" in variables["REGISTRY_LAYER_CSV"]
+        assert "films (Film packages)" in variables["REGISTRY_LAYER_CSV"]
+        assert variables["LEDGER_TRANSITION_TOTAL"] == "27"
+
+    def test_layer_and_ledger_tokens_subset(self, config_path: Path) -> None:
+        roster = subset_roster(SAMPLE_SLUGS)
+        variables = generate_variables(config_path, roster=roster)
+        assert variables["LEDGER_TRANSITION_TOTAL"] == "5"
+
     def test_require_outputs_flag_accepted(self, config_path: Path) -> None:
         # The coordinator has no analysis-output dependency; the flag is
         # accepted for pipeline parity and never gates.
@@ -159,3 +172,25 @@ class TestResolveManuscriptTree:
         written = resolve_manuscript_tree(templates, Path(tmp_path) / "out", variables)
         assert [path.name for path in written] == ["00_abstract.md", "99_references.md"]
         assert all(path.is_file() for path in written)
+
+
+class TestManuscriptCrossReference:
+    def test_every_prose_token_is_generated(self) -> None:
+        """Live gate: every {{TOKEN}} in numbered prose sections is produced.
+
+        Globs only numbered manuscript sections ([0-9]*.md) — guide files
+        (SYNTAX.md, AGENTS.md, README.md) legitimately illustrate literal
+        placeholders and are excluded.
+        """
+        import re
+
+        variables = generate_variables(REAL_CONFIG)
+        used: set[str] = set()
+        sections = sorted(PROJECT_ROOT.glob("manuscript/[0-9]*.md"))
+        assert sections, "no numbered prose sections found"
+        for section in sections:
+            text = section.read_text(encoding="utf-8")
+            used |= {match[2:-2] for match in re.findall(r"\{\{[A-Z0-9_]+\}\}", text)}
+        assert used, "no {{TOKEN}}s found in numbered prose sections"
+        missing = used - set(variables)
+        assert not missing, f"prose tokens not generated: {sorted(missing)}"

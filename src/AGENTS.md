@@ -16,11 +16,19 @@ exemplar's mathematical core could.
   (swap point documented in `TODO.md`).
 - `registry.py` — `PackageRecord`, the 27-film `ROSTER`, `build_roster`,
   `get_package`, `find_by_status`, `subset_roster`, identity constants.
+- `reconcile.py` — `override_codenames`, `harvest_gadgets`, `reconcile_report`:
+  pure merge of real films' codenames + gadget tables over the provisional
+  registry (refresh/replace semantics; inputs are immutable).
 - `ledger.py` — `LedgerEntry`, `MissionLedger` (forward-only transitions,
-  append-only audit, staleness, lossless `to_json`/`from_json`).
-- `status.py` — `CoverageSummary`, `BlockedPackage`, `SuiteStatus`,
-  `build_status`, `count_by_status`.
-- `situation.py` — `build_situation_room`, `write_situation_room` (HTML).
+  attributable-identity validation, `validate_transition`, append-only audit
+  with deterministic summaries `transition_summary`/`per_agent_summary`/
+  `phase_timeline`, staleness, lossless `to_json`/`from_json`).
+- `status.py` — `CoverageSummary`, `BlockedPackage`, `LayerSummary`,
+  `SUITE_LAYERS`, `SuiteStatus`, `build_status` (incl. `layer_ready`),
+  `count_by_status`.
+- `situation.py` — `build_situation_room` (coverage heat, mission-timeline
+  bars, per-film gadget groups, suite-layers + recent-transitions sections),
+  `write_situation_room` (HTML).
 - `manuscript_variables.py` — `load_config`, `generate_variables`,
   `resolve_manuscript_tree`.
 - `__init__.py` — public API re-export (`__all__`).

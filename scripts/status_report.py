@@ -61,6 +61,18 @@ def _status_to_dict(status: SuiteStatus) -> dict[str, object]:
             {"slug": item.slug, "reason": item.reason}
             for item in status.blocked_packages
         ],
+        "layers": [
+            {
+                "layer": layer.layer,
+                "label": layer.label,
+                "packages": list(layer.packages),
+                "ready": layer.ready,
+                "ready_count": layer.ready_count,
+                "total": layer.total,
+                "coverage_mean": layer.coverage_mean,
+            }
+            for layer in status.layers
+        ],
         "dependency_ready": status.dependency_ready,
         "generated_at": status.generated_at.isoformat(),
     }
@@ -102,6 +114,13 @@ def main(argv: list[str] | None = None) -> int:
     print("  by phase : " + "  ".join(f"{k.value}={v}" for k, v in by_phase.items()))
     print(
         f"  coverage : {status.coverage.known} measured, mean {status.coverage.formatted_mean()}"
+    )
+    print(
+        "  by layer : "
+        + "  ".join(
+            f"{layer.layer}={layer.ready_count}/{layer.total}"
+            for layer in status.layers
+        )
     )
     print(
         f"  stale    : {len(status.stale_packages)}  blocked: {len(status.blocked_packages)}"

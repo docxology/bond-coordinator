@@ -28,6 +28,25 @@ SYSTEM_AGENT = "bond-coordinator"
 SYSTEM_VERSION = "0.0.0"
 
 
+def _require_forward(slug: str, current: MissionPhase, desired_index: int) -> None:
+    """Raise :class:`ValueError` when ``desired_index`` is out of the lifecycle.
+
+    Two rules: no phase exists past ``debrief`` (an ``advance`` from debrief
+    yields index 5), and a transition must never move backwards.  Shared by
+    :meth:`MissionLedger._transition` and
+    :meth:`MissionLedger.validate_transition` so both paths enforce identical
+    semantics.
+    """
+    if desired_index > len(MissionPhase) - 1:
+        raise ValueError(f"cannot advance {slug!r} past {MissionPhase.DEBRIEF.value!r}")
+    if desired_index < current.phase_index:
+        raise ValueError(
+            f"illegal transition for {slug!r}: {current.value!r} → "
+            f"{MissionPhase(list(MissionPhase)[desired_index]).value!r} "
+            "moves the mission backwards"
+        )
+
+
 def utcnow() -> datetime:
     """Current time as a timezone-aware UTC datetime (determinism anchor)."""
     return datetime.now(timezone.utc)
@@ -138,9 +157,86 @@ class MissionLedger:
         """Every recorded transition across all packages (append-only)."""
         return list(self._history)
 
+    # ----------------------------------------------------- audit summaries
+
+    def transition_summary(self) -> dict[MissionPhase, int]:
+        """Number of recorded entries per phase across the whole audit trail.
+
+        Includes the initial registration entries (all ``brief``), so the
+        counts are the complete append-only picture, not just net moves.
+        """
+        counts = {phase: 0 for phase in MissionPhase}
+        for entry in self._history:
+            counts[entry.phase] += 1
+        return counts
+
+    def per_agent_summary(self) -> dict[str, int]:
+        """Number of recorded transitions per ``updated_by`` identity.
+
+        Keys appear in first-appearance order (deterministic for a given
+        history); the system agent's registration entries are included.
+        """
+        counts: dict[str, int] = {}
+        for entry in self._history:
+            counts[entry.updated_by] = counts.get(entry.updated_by, 0) + 1
+        return counts
+
+    def phase_timeline(self, slug: str) -> list[tuple[str, str]]:
+        """Chronological ``(phase, ISO-timestamp)`` history for ``slug``.
+
+        Backs the situation room's per-film mission timeline: one entry per
+        recorded transition, oldest first.  Raises :class:`KeyError` for an
+        unknown slug.
+        """
+        if slug not in self._current:
+            raise KeyError(f"package {slug!r} is not registered in the ledger")
+        return [
+            (entry.phase.value, entry.updated_at.isoformat())
+            for entry in self._history
+            if entry.slug == slug
+        ]
+
     def is_registered(self, slug: str) -> bool:
         """True when ``slug`` has a ledger entry (i.e. is in the roster)."""
         return slug in self._current
+
+    # ------------------------------------------------------------ validation
+
+    @staticmethod
+    def _validate_identity(updated_by: str, version: str, note: str | None) -> None:
+        """Reject empty identity fields and non-string notes.
+
+        Every transition must be attributable: ``updated_by`` and ``version``
+        are non-empty strings, and an optional note must be a string.  Raises
+        :class:`ValueError` with the offending field named.
+        """
+        if not isinstance(updated_by, str) or not updated_by.strip():
+            raise ValueError("updated_by must be a non-empty string")
+        if not isinstance(version, str) or not version.strip():
+            raise ValueError("version must be a non-empty string")
+        if note is not None and not isinstance(note, str):
+            raise ValueError("note must be a string or None")
+
+    def validate_transition(
+        self,
+        slug: str,
+        target: MissionPhase | str,
+        updated_by: str,
+        version: str,
+        note: str | None = None,
+    ) -> None:
+        """Validate a prospective transition **without mutating the ledger**.
+
+        Runs the same checks :meth:`jump` would: the slug must be registered,
+        the identity fields must be non-empty, and the target phase must be a
+        legal forward move from the package's current phase.  Raises
+        :class:`KeyError` for an unknown slug and :class:`ValueError` for rule
+        violations — a caller can gate a transition before committing it.
+        """
+        current = self.get(slug)
+        self._validate_identity(updated_by, version, note)
+        desired = MissionPhase(target) if isinstance(target, str) else target
+        _require_forward(slug, current.phase, desired.phase_index)
 
     # -------------------------------------------------------------- mutation
 
@@ -183,6 +279,7 @@ class MissionLedger:
         target: MissionPhase | str | None = None,
     ) -> LedgerEntry:
         current = self.get(slug)
+        self._validate_identity(updated_by, version, note)
         current_index = current.phase.phase_index
 
         if target is not None:
@@ -195,16 +292,7 @@ class MissionLedger:
         else:  # pragma: no cover — defensive; jump is only 0/-1 from public API
             raise ValueError(f"invalid jump {jump!r}")
 
-        if desired_index > len(MissionPhase) - 1:
-            raise ValueError(
-                f"cannot advance {slug!r} past {MissionPhase.DEBRIEF.value!r}"
-            )
-        if desired_index < current_index:
-            raise ValueError(
-                f"illegal transition for {slug!r}: "
-                f"{current.phase.value!r} → {MissionPhase(list(MissionPhase)[desired_index]).value!r} "
-                "moves the mission backwards"
-            )
+        _require_forward(slug, current.phase, desired_index)
 
         phase = MissionPhase(list(MissionPhase)[desired_index])
         entry = LedgerEntry(

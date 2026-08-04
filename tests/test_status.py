@@ -145,3 +145,49 @@ class TestCountByStatus:
     def test_count_convenience_subset(self, sample_slugs) -> None:
         roster = subset_roster(sample_slugs)
         assert count_by_status(PackageStatus.SCAFFOLDED, roster) == 5
+
+
+class TestLayerSummaries:
+    def test_full_fleet_layer_defaults(self) -> None:
+        status = build_status(now=FIXED_NOW)
+        layers = {layer.layer: layer for layer in status.layers}
+        assert len(status.layers) == 6
+        for key in ("layer0", "layer1", "layer2", "layer3", "layer4", "films"):
+            assert key in layers
+        # layer1 (bond-api) tracks dependency_ready=False; others not probed.
+        assert layers["layer1"].ready is False
+        assert layers["layer0"].ready is None
+        # The films layer aggregates the full 27 films.
+        assert layers["films"].total == 27
+        assert layers["films"].ready_count == 0
+        assert layers["films"].coverage_mean is None
+        assert layers["films"].ready is None
+
+    def test_fixture_subset_films_layer(self, sample_roster, sample_slugs) -> None:
+        status = build_status(sample_roster, now=FIXED_NOW)
+        films = next(layer for layer in status.layers if layer.layer == "films")
+        assert films.total == 5
+        assert set(films.packages) == set(sample_slugs)
+
+    def test_layer_ready_injection(self) -> None:
+        status = build_status(
+            now=FIXED_NOW,
+            dependency_ready=True,
+            layer_ready={"layer0": True, "layer4": False},
+        )
+        layers = {layer.layer: layer for layer in status.layers}
+        assert layers["layer0"].ready is True
+        assert layers["layer0"].ready_count == 1
+        assert layers["layer4"].ready is False
+        assert layers["layer4"].ready_count == 0
+        # layer1 inferred from dependency_ready when not overridden.
+        assert layers["layer1"].ready is True
+
+    def test_films_layer_ready_and_coverage(self, sample_roster) -> None:
+        roster = (
+            replace(sample_roster[0], status=PackageStatus.READY, coverage=95.0),
+        ) + sample_roster[1:]
+        status = build_status(roster, now=FIXED_NOW)
+        films = next(layer for layer in status.layers if layer.layer == "films")
+        assert films.ready_count == 1
+        assert films.coverage_mean == 95.0

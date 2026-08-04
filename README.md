@@ -17,9 +17,10 @@ whether it is healthy* are machine-checkable facts.
 | Capability | Module | Responsibility |
 |---|---|---|
 | **Registry** | `src/bond_coordinator/registry.py` | Authoritative, canon-ordered list of all 27 film packages: slug, film, year, mission codename, status, measured coverage. |
-| **Mission-state ledger** | `src/bond_coordinator/ledger.py` | Each package's lifecycle (`brief → recon → plan → execute → debrief`) with forward-only transition rules and an append-only audit trail of who/when/version. |
-| **Suite status** | `src/bond_coordinator/status.py` | Deterministic aggregate snapshot: counts by state/phase, coverage summary, stale/blocked flags. |
-| **Situation room** | `src/bond_coordinator/situation.py` | Self-contained HTML dashboard listing every package + the Q-branch gadget inventory. |
+| **Reconcile** | `src/bond_coordinator/reconcile.py` | Merge real films' codenames + gadget tables over the provisional registry (refresh/replace semantics); `scripts/reconcile.py` drives discovery via `bond-api`. |
+| **Mission-state ledger** | `src/bond_coordinator/ledger.py` | Each package's lifecycle (`brief → recon → plan → execute → debrief`) with forward-only transition rules, attributable-identity validation, an append-only audit trail, and deterministic audit summaries (`transition_summary`, `per_agent_summary`, `phase_timeline`). |
+| **Suite status** | `src/bond_coordinator/status.py` | Deterministic aggregate snapshot: counts by state/phase, coverage summary, stale/blocked flags, and **per-layer summaries** of the declared suite topology. |
+| **Situation room** | `src/bond_coordinator/situation.py` | Self-contained HTML dashboard: per-package table with **mission-timeline bars** and **coverage heat**, suite-layers table, **per-film gadget groups**, and a recent-transitions audit tail. |
 | **Manuscript variables** | `src/bond_coordinator/manuscript_variables.py` | Injects identity (from `manuscript/config.yaml`) and registry-derived counts as `{{TOKEN}}`s — never hand-authored in prose. |
 
 The `src/bond_coordinator/` core is **pure**: standard library + `pyyaml` only,
@@ -55,6 +56,10 @@ uv run python scripts/advance_mission.py --slug goldfinger --phase recon \
 # Regenerate the situation-room HTML dashboard (output/situation_room.html)
 uv run python scripts/build_situation_room.py
 
+# Reconcile the registry against real film packages (codenames + gadgets)
+uv run python scripts/reconcile.py
+uv run python scripts/reconcile.py --gadgets output/data/gadgets.json
+
 # Hydrate manuscript {{TOKEN}}s (output/manuscript/*.md, runs last)
 uv run python scripts/z_generate_manuscript_variables.py
 ```
@@ -66,10 +71,10 @@ disposable** — always regenerated from source, never hand-edited.
 
 - Package: `bond-coordinator` (Layer 2)
 - Codename: `MISSION CONTROL`
-- Depends on: `bond-api` (Layer 1), `bond-utilities` (Layer 0) — *not yet
-  built*; this package ships a pure-core mirror of the protocol shapes
-  (`src/bond_coordinator/types.py`) with a documented swap point (see
-  `TODO.md`).
+- Depends on: `bond-api` (Layer 1, built — drives `scripts/reconcile.py`
+  discovery) and `bond-utilities` (Layer 0, not yet built); the pure core
+  ships its own protocol mirror (`src/bond_coordinator/types.py`) with a
+  documented swap point (see `TODO.md`).
 
 ## Repository layout
 

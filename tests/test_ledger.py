@@ -6,6 +6,7 @@ injected clock — no wall-clock dependence anywhere.
 
 from __future__ import annotations
 
+import json
 from datetime import timedelta
 
 import pytest
@@ -177,6 +178,24 @@ class TestPersistence:
         with pytest.raises(ValueError, match="current"):
             MissionLedger.from_json('{"history": []}')
 
+    def test_from_json_rejects_non_object_history(self) -> None:
+        with pytest.raises(ValueError, match="objects"):
+            MissionLedger.from_json('{"current": {}, "history": ["not-an-object"]}')
+
+    def test_from_json_rejects_incomplete_current_state(self, sample_roster) -> None:
+        entry = LedgerEntry(
+            slug="goldfinger",
+            phase=MissionPhase.BRIEF,
+            updated_by="system",
+            updated_at=FIXED_NOW,
+            version="0.1.0",
+        )
+        payload = json.dumps(
+            {"current": {"goldfinger": entry.to_dict()}, "history": [entry.to_dict()]}
+        )
+        with pytest.raises(ValueError, match="missing current state"):
+            MissionLedger.from_json(payload, roster=sample_roster)
+
     def test_to_json_is_deterministic(self, fresh_ledger) -> None:
         fresh_ledger.advance("dr_no", "agent-007", "0.1.0")
         assert fresh_ledger.to_json() == fresh_ledger.to_json()
@@ -206,3 +225,96 @@ class TestEntryCodec:
         )
         assert entry.note is None
         assert entry.to_dict()["note"] == ""
+
+
+class TestTransitionValidation:
+    def test_validate_transition_ok(self, fresh_ledger) -> None:
+        fresh_ledger.validate_transition("goldfinger", "recon", "agent-007", "0.1.0")
+        # Same-phase target is a legal forward (non-moving) check.
+        fresh_ledger.validate_transition("goldfinger", "brief", "agent-007", "0.1.0")
+        # Validation never mutates the ledger.
+        assert fresh_ledger.get("goldfinger").phase is MissionPhase.BRIEF
+
+    def test_validate_transition_accepts_enum(self, fresh_ledger) -> None:
+        fresh_ledger.jump("goldfinger", "recon", "agent-007", "0.1.0")
+        fresh_ledger.validate_transition(
+            "goldfinger", MissionPhase.PLAN, "agent-007", "0.1.0"
+        )
+
+    def test_validate_transition_backwards_raises(self, fresh_ledger) -> None:
+        fresh_ledger.jump("goldfinger", "plan", "agent-007", "0.1.0")
+        with pytest.raises(ValueError, match="backwards"):
+            fresh_ledger.validate_transition(
+                "goldfinger", "brief", "agent-007", "0.1.0"
+            )
+
+    def test_validate_transition_unknown_slug_raises(self, fresh_ledger) -> None:
+        with pytest.raises(KeyError):
+            fresh_ledger.validate_transition(
+                "not_a_film", "recon", "agent-007", "0.1.0"
+            )
+
+    def test_validate_transition_empty_updated_by_raises(self, fresh_ledger) -> None:
+        with pytest.raises(ValueError, match="updated_by"):
+            fresh_ledger.validate_transition("goldfinger", "recon", "", "0.1.0")
+
+    def test_validate_transition_blank_version_raises(self, fresh_ledger) -> None:
+        with pytest.raises(ValueError, match="version"):
+            fresh_ledger.validate_transition("goldfinger", "recon", "agent-007", "  ")
+
+    def test_validate_transition_non_string_note_raises(self, fresh_ledger) -> None:
+        with pytest.raises(ValueError, match="note"):
+            fresh_ledger.validate_transition(
+                "goldfinger", "recon", "agent-007", "0.1.0", note=5
+            )
+
+    def test_validate_transition_bad_target_raises(self, fresh_ledger) -> None:
+        with pytest.raises(ValueError):
+            fresh_ledger.validate_transition("goldfinger", "not_a_phase", "a", "0.1.0")
+
+
+class TestIdentityValidationOnMutation:
+    def test_advance_rejects_empty_updated_by(self, fresh_ledger) -> None:
+        with pytest.raises(ValueError, match="updated_by"):
+            fresh_ledger.advance("goldfinger", "   ", "0.1.0")
+
+    def test_advance_rejects_empty_version(self, fresh_ledger) -> None:
+        with pytest.raises(ValueError, match="version"):
+            fresh_ledger.advance("goldfinger", "agent-007", "")
+
+    def test_touch_rejects_non_string_note(self, fresh_ledger) -> None:
+        with pytest.raises(ValueError, match="note"):
+            fresh_ledger.touch("goldfinger", "agent-007", "0.1.0", note=123)
+
+
+class TestAuditSummaries:
+    def test_transition_summary_counts_all_entries(self, fresh_ledger) -> None:
+        summary = fresh_ledger.transition_summary()
+        assert summary[MissionPhase.BRIEF] == 5
+        assert summary[MissionPhase.RECON] == 0
+        fresh_ledger.advance("goldfinger", "agent-007", "0.1.0")
+        fresh_ledger.jump("skyfall", "debrief", "agent-007", "0.1.0")
+        summary = fresh_ledger.transition_summary()
+        assert summary[MissionPhase.BRIEF] == 5  # registrations remain
+        assert summary[MissionPhase.RECON] == 1
+        assert summary[MissionPhase.DEBRIEF] == 1
+
+    def test_per_agent_summary(self, fresh_ledger) -> None:
+        fresh_ledger.advance("goldfinger", "agent-007", "0.1.0")
+        fresh_ledger.advance("goldfinger", "agent-007", "0.1.0")
+        fresh_ledger.jump("skyfall", "debrief", "q-branch", "0.1.0")
+        summary = fresh_ledger.per_agent_summary()
+        assert summary[SYSTEM_AGENT] == 5
+        assert summary["agent-007"] == 2
+        assert summary["q-branch"] == 1
+
+    def test_phase_timeline_is_chronological(self, fresh_ledger, fixed_clock) -> None:
+        fresh_ledger.advance("goldfinger", "agent-007", "0.1.0")
+        fresh_ledger.advance("goldfinger", "agent-007", "0.2.0")
+        timeline = fresh_ledger.phase_timeline("goldfinger")
+        assert [phase for phase, _ in timeline] == ["brief", "recon", "plan"]
+        assert all(ts == fixed_clock().isoformat() for _, ts in timeline)
+
+    def test_phase_timeline_unknown_slug_raises(self, fresh_ledger) -> None:
+        with pytest.raises(KeyError):
+            fresh_ledger.phase_timeline("not_a_film")

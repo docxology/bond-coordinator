@@ -57,20 +57,20 @@ Enforced by `docs/architecture.md` and the `manuscript/layer_contract.yaml`.
 src/bond_coordinator/
     types.py                Asset, Gadget, GadgetRegistry, PackageStatus, MissionPhase (bond-api mirror)
     registry.py             PackageRecord, ROSTER (27), build_roster, get_package, find_by_status, subset_roster
-    ledger.py               LedgerEntry, MissionLedger (transitions, audit, staleness, JSON)
-    status.py               CoverageSummary, BlockedPackage, SuiteStatus, build_status
-    situation.py            build_situation_room, write_situation_room
+    ledger.py               LedgerEntry, MissionLedger (transitions, validation, audit summaries, staleness, JSON)
+    status.py               CoverageSummary, BlockedPackage, LayerSummary, SUITE_LAYERS, SuiteStatus, build_status
+    situation.py            build_situation_room, write_situation_room (coverage heat, mission timeline, per-film gadgets, layers, audit tail)
     manuscript_variables.py load_config, generate_variables, resolve_manuscript_tree
     __init__.py             public API
 scripts/
-    status_report.py        print/persist suite status (human or --json)
+    status_report.py        print/persist suite status (human or --json, includes per-layer)
     reconcile.py            merge real films' codenames + gadgets into the registry (bond-api probe)
     advance_mission.py      advance a package's phase in the persisted ledger
     build_situation_room.py regenerate output/situation_room.html
     z_generate_manuscript_variables.py  hydrate {{TOKEN}}s (runs last; z_ prefix)
 tests/
     conftest.py             5-film deterministic fixture + fixed clock
-    test_registry.py test_ledger.py test_status.py test_situation.py
+    test_registry.py test_ledger.py test_status.py test_situation.py test_reconcile.py
     test_manuscript_variables.py test_scripts_smoke.py
 manuscript/                 config.yaml identity + 8 sections with {{TOKEN}} injection
 docs/                       agent-facing rulebook (read-first: agent_instructions.md)

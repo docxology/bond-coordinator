@@ -27,14 +27,24 @@ fails when absent.
   `PackageRecord` shape, and lookup helpers.  Status/coverage are honest
   (currently all `scaffolded`/`None`); they change only from measured gate
   output.
-- **`ledger.py`** — forward-only mission lifecycle per package, append-only
-  audit trail, staleness.  Pure JSON codecs (`to_json`/`from_json`) for
-  provenance; only `scripts/advance_mission.py` touches disk.
+- **`reconcile.py`** — pure merge of real films' codenames + gadget tables
+  over the provisional registry (`override_codenames`, `harvest_gadgets`);
+  refresh/replace semantics, inputs immutable.  The discovery lives in
+  `scripts/reconcile.py` via `bond-api`.
+- **`ledger.py`** — forward-only mission lifecycle per package with
+  attributable-identity validation (`validate_transition` never mutates),
+  append-only audit trail, deterministic audit summaries
+  (`transition_summary`, `per_agent_summary`, `phase_timeline`), staleness.
+  Pure JSON codecs (`to_json`/`from_json`) for provenance; only
+  `scripts/advance_mission.py` touches disk.
 - **`status.py`** — `build_status(roster, ledger, now=, stale_days=,
-  dependency_ready=)` → one deterministic `SuiteStatus` snapshot with
-  stale/blocked flags and a coverage summary.
+  dependency_ready=, layer_ready=)` → one deterministic `SuiteStatus` snapshot
+  with stale/blocked flags, a coverage summary, and a per-layer summary
+  (`SUITE_LAYERS` topology → `LayerSummary` per layer).
 - **`situation.py`** — renders `SuiteStatus` + roster + ledger + `GadgetRegistry`
-  into one self-contained, HTML-escaped document.
+  into one self-contained, HTML-escaped document: per-package table with
+  mission-timeline bars and coverage heat, suite-layers table, per-film gadget
+  groups, and a recent-transitions audit tail.
 - **`manuscript_variables.py`** — identity from `manuscript/config.yaml`,
   fleet counts from registry/status, `{{TOKEN}}` map + tree resolution.
 

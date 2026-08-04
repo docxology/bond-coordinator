@@ -11,9 +11,10 @@ touch files, probe for the future `bond-api`, and delegate to the pure core.
 
 | Script | Responsibility | Primary output |
 |---|---|---|
-| `status_report.py` | Print/persist the aggregate suite status (human or `--json`). | `output/data/suite_status.json` |
-| `advance_mission.py` | Advance one package's phase in the persisted ledger (forward-only). | `output/data/mission_ledger.json` |
+| `status_report.py` | Print/persist the aggregate suite status (human or `--json`, per-layer summary). | `output/data/suite_status.json` |
+| `advance_mission.py` | Advance one package's phase in the persisted ledger (validated, forward-only). | `output/data/mission_ledger.json` |
 | `build_situation_room.py` | Regenerate the situation-room HTML dashboard. | `output/situation_room.html` |
+| `reconcile.py` | Reconcile registry codenames + harvest gadgets from real films via `bond-api`. | reconciled manifest / `gadgets.json` |
 | `z_generate_manuscript_variables.py` | Hydrate manuscript `{{TOKEN}}`s (runs last; `z_` prefix). | `output/data/manuscript_variables.json`, `output/manuscript/*.md` |
 
 ## Usage
@@ -22,6 +23,7 @@ touch files, probe for the future `bond-api`, and delegate to the pure core.
 uv run python scripts/status_report.py [--json] [--ledger PATH]
 uv run python scripts/advance_mission.py --slug <s> --phase <p> [--by USER] [--version V] [--note N] [--ledger PATH]
 uv run python scripts/build_situation_room.py [--out PATH]
+uv run python scripts/reconcile.py [--slugs FILM ...] [--write PATH] [--gadgets PATH]
 uv run python scripts/z_generate_manuscript_variables.py [--config PATH] [--allow-draft]
 ```
 
