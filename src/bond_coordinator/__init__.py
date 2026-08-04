@@ -16,6 +16,7 @@ from .manuscript_variables import (
     load_config,
     resolve_manuscript_tree,
 )
+from .reconcile import harvest_gadgets, override_codenames, reconcile_report
 from .registry import (
     COORDINATOR_CODENAME,
     FILM_SLUGS,
@@ -78,7 +79,10 @@ __all__ = [
     "find_by_status",
     "generate_variables",
     "get_package",
+    "harvest_gadgets",
     "load_config",
+    "override_codenames",
+    "reconcile_report",
     "resolve_manuscript_tree",
     "subset_roster",
     "utcnow",

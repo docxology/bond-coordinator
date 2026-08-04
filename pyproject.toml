@@ -16,7 +16,13 @@ authors = [
 requires-python = ">=3.10"
 dependencies = [
     "pyyaml>=6.0",
+    "bond-api",
 ]
+
+# Local path dependency so scripts/reconcile.py can probe the FROZEN bond-api
+# protocol when reconciling the registry against real film packages.
+[tool.uv.sources]
+bond-api = { path = "/Users/4d/Documents/GitHub/template/projects/working/bond/bond-api" }
 
 [project.optional-dependencies]
 dev = [
@@ -25,6 +31,7 @@ dev = [
     "ruff>=0.6.0",
     "mypy>=1.10.0",
     "types-PyYAML>=6.0.12",
+    "numpy>=1.24.0",
 ]
 
 [tool.pytest.ini_options]
