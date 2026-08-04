@@ -15,3 +15,6 @@ __pycache__/
 
 # Generated artifacts — always regenerated from src/ + config (never hand-edited).
 output/
+
+# build artifacts (setuptools/uv path-dep builds)
+build/
