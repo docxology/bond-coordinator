@@ -1,53 +1,61 @@
 ---
 name: bond-coordinator
-description: Code-centric optimization research exemplar — gradient descent, convergence analysis, automated figures, dashboard, and publication-quality PDF.
+description: Mission control (Layer 2) for the BOND fleet — registry, ledger, status, situation room. Load when working inside this package.
 version: 0.1.0
 author: docxology
 license: MIT
-tags: [exemplar, code, optimization, thin-orchestrator]
+tags: [bond, mission-control, registry, ledger, situation-room]
 ---
 
 # bond-coordinator
 
-Project-scoped skill for the in-repo exemplar at
-`projects/working/bond/bond-coordinator/`. Load this when working inside the project.
+Project-scoped skill for the package at
+`projects/working/bond/bond-coordinator/`.  Load when working inside it.
 
 ## When to Use
 
-- Working inside the `bond-coordinator` exemplar — running scripts, editing source,
-  or regenerating outputs.
-- Forking this exemplar as the starting scaffold for a new research project.
-- Validating that the exemplar's contracts (thin-orchestrator, layer boundaries,
-  no-mocks testing) still hold after changes.
+- Working inside `bond-coordinator` — editing `src/bond_coordinator/`,
+  `scripts/`, tests, or docs.
+- Verifying the pure-core / thin-orchestrator boundary or the zero-mock,
+  determinism, and coverage contracts.
+- Re-identifying or maintaining this BOND package.
 
 ## Quick Reference
 
 ```bash
-# From the repository root
-uv run pytest projects/working/bond/bond-coordinator/tests --cov=projects/working/bond/bond-coordinator/src --cov-fail-under=90
-uv run python scripts/pipeline/stage_02_analysis.py --project templates/bond-coordinator
-uv run python scripts/pipeline/stage_03_render.py --project templates/bond-coordinator
-uv run python scripts/pipeline/stage_04_validate.py --project templates/bond-coordinator
-uv run python scripts/pipeline/stage_05_copy.py --project templates/bond-coordinator
+# From the package directory (not the repo root — worktree is local-only)
+uv sync --extra dev
+uv run pytest tests/ --cov=src --cov-fail-under=90
+uv run ruff check src scripts tests && uv run ruff format --check src scripts tests
+uv run mypy
+```
+
+## Run the tools
+
+```bash
+uv run python scripts/status_report.py
+uv run python scripts/advance_mission.py --slug goldfinger --phase recon --by agent-007
+uv run python scripts/build_situation_room.py
+uv run python scripts/z_generate_manuscript_variables.py
 ```
 
 ## Pitfalls
 
-- **Keep scripts thin.** Business logic belongs in `src/` or shared
-  `infrastructure/`, not in `scripts/`.
-- **No mocks.** All tests must use real data, real files, and real
-  computation.
-- **Outputs are disposable.** Never hand-edit `output/` — regenerate from
-  source and config.
-- **Keep tracked benchmarks deterministic.** Serialize reproducible inputs,
-  objective values, and checks; keep wall-clock timing as a runtime-only
-  diagnostic.
-- **Run from the repo root.** Commands assume the template monorepo root
-  as working directory unless the child `AGENTS.md` states otherwise.
+- **Keep scripts thin.**  Registry/ledger/status/situation logic belongs in
+  `src/bond_coordinator/` — a transition rule or count in `scripts/` violates
+  the boundary.
+- **No mocks.**  All tests use real data/files/computation.  Determinism comes
+  from the injected `FIXED_NOW` clock in `tests/conftest.py`.
+- **Pure core.**  `src/` imports stdlib + `pyyaml` only — no
+  `infrastructure.*`, no sibling BOND packages, no file I/O.
+- **Outputs are disposable.**  Never edit `output/`; regenerate from source.
+- **Local-only.**  Own git repo, no remote.  Commit path-scoped inside this
+  directory only.
+- **bond-api not built.**  The coordinator ships a pure-core protocol mirror
+  (`src/bond_coordinator/types.py`); swap when Layer 1 lands (see `TODO.md`).
 
 ## Cross-refs
 
 - Project contract: [`AGENTS.md`](../../../AGENTS.md)
-- README: [`README.md`](../../../README.md)
-- TODO: [`TODO.md`](../../../TODO.md)
-- Exemplar roster: [`projects/AGENTS.md`](../../../../../AGENTS.md)
+- Read-first rules: [`docs/agent_instructions.md`](../../../docs/agent_instructions.md)
+- Fleet scope: [`SCOPE.md`](../../SCOPE.md)

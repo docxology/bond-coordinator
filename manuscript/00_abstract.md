@@ -1,11 +1,30 @@
 # Abstract {#sec:abstract}
 
-This paper presents a convergence study of **fixed-step gradient descent** on a convex quadratic, framed as the computational exemplar of the [Research Project Template](https://github.com/docxology/template). The implementation lives in `projects/working/bond/bond-coordinator/src/optimizer.py`; experiments and figures are orchestrated by `projects/working/bond/bond-coordinator/scripts/optimization_analysis.py` and hydrated into the manuscript through `scripts/z_generate_manuscript_variables.py`, so tables and prose track `output/data/optimization_results.csv` after every pipeline run.
+This paper presents **{{CONFIG_TITLE}}** (codename **{{CONFIG_CODENAME}}**), the
+Layer-2 mission-control package for {{CONFIG_SUITE_NAME}}, a fleet of software
+packages descended from a numerical-optimization research exemplar.  Where that
+exemplar demonstrated optimization mathematics inside a single package,
+{{CONFIG_TITLE}} demonstrates the *fleet* view: a deterministic registry of all
+{{REGISTRY_TOTAL}} film packages, a forward-only mission-state ledger, an
+aggregate suite-status report, and a self-contained HTML situation room.
 
-We evaluate {{CONFIG_NUM_STEP_SIZES}} step sizes from $\alpha = {{CONFIG_MIN_STEP_SIZE}}$ to $\alpha = {{CONFIG_MAX_STEP_SIZE}}$, spanning conservative, near-optimal, aggressive, and divergent regimes for a unit Hessian model. The build chain exercises template infrastructure end-to-end: scientific helpers (`infrastructure.scientific.stability`, `infrastructure.scientific.benchmarking`), validation, rendering (`infrastructure/rendering/pdf_renderer.py`), and reporting. Accessibility-oriented plotting defaults (colourblind-safe palette, 300 dpi exports) are centralized in `src/figures/` and `src/analysis/`.
+The registry (`src/bond_coordinator/registry.py`) is seeded from the ROSTER
+conventions in `projects/working/bond/SCOPE.md` §2.1 and assigns a provisional
+mission codename per film.  The ledger (`src/bond_coordinator/ledger.py`)
+tracks each package's lifecycle — {{CONFIG_MISSION_LIFECYCLE}} — with strict
+forward-only transition rules and an append-only audit trail of
+who/when/version.  The status module (`src/bond_coordinator/status.py`)
+aggregates counts by state and phase, a measured-coverage summary, and
+stale/blocked flags.  The situation room (`src/bond_coordinator/situation.py`)
+renders the whole fleet — packages, phases, coverage, and the Q-branch gadget
+inventory — into one self-contained HTML document.
 
-Contributions are **methodological** and **architectural**. On the methods side, we relate empirical iteration counts and error decay to the scalar contraction factor $\rho(\alpha) = |1-\alpha|$ and document cases where runs hit $N_{\max} = {{CONFIG_MAX_ITERATIONS}}$ before meeting the gradient tolerance. On the architecture side, we demonstrate a zero-mock test suite on project `src/` (see [test_optimizer.py](https://github.com/docxology/template/blob/main/projects/working/bond/bond-coordinator/tests/test_optimizer.py)), automated six-figure analysis, and reproducibility metadata (configuration hash, artifact counts) injected into [@sec:reproducibility].
-
-**Results (this configuration):** {{RESULT_NUM_CONVERGED}} of {{CONFIG_NUM_STEP_SIZES}} grid points report `converged=True` in the CSV; non-convergent rows flag either slow progress at small $\alpha$ under the iteration cap or instability when $|1-\alpha| \geq 1$. The analytical minimizer remains $x^\ast = {{RESULT_OPTIMUM_X}}$ with $f(x^\ast) = {{RESULT_OPTIMUM_F}}$ for the configured $(A,b)$.
+**Fleet state (this build):** {{REGISTRY_TOTAL}} packages tracked;
+{{REGISTRY_SCAFFOLDED}} scaffolded, {{REGISTRY_BUILDING}} building,
+{{REGISTRY_READY}} ready, {{REGISTRY_RED}} red; {{REGISTRY_COVERAGE_KNOWN}}
+packages with measured coverage (mean {{REGISTRY_COVERAGE_MEAN}},
+{{REGISTRY_COVERAGE_AT_90}} at/above the 90% gate, {{REGISTRY_COVERAGE_UNKNOWN}}
+not yet gated); {{REGISTRY_BLOCKED_COUNT}} blocked;
+{{REGISTRY_STALE_COUNT}} stale.
 
 **Keywords:** {{CONFIG_KEYWORDS}}

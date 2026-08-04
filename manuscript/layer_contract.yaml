@@ -1,5 +1,5 @@
-# Code-centric exemplar: optional monorepo adapters only.
-allow_infrastructure_imports:
-  - src/analysis/_infra.py
-  - src/_runtime.py
-  - src/benchmark_support.py
+# bond-coordinator: pure-core mission control.
+# Every src/bond_coordinator/ module is pure (stdlib + pyyaml only).
+# No src/ module may import infrastructure.* or a sibling BOND package;
+# thin orchestrators in scripts/ bind the core to the filesystem/probes.
+allow_infrastructure_imports: []

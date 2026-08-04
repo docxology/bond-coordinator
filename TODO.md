@@ -1,68 +1,57 @@
 # bond-coordinator TODO
 
-Forward-only backlog for the code-first numerical exemplar — the reference
-thin-orchestrator control-positive path for code-centric research projects.
+Forward-only backlog for **bond-coordinator** — mission control (Layer 2) of
+the BOND suite.  Local-only working tree; no remote.
 
-## Current validation evidence
+## Status
 
-- Manuscript pre-render gate: `uv run python -m infrastructure.validation.cli prerender projects/working/bond/bond-coordinator/manuscript --repo-root .`
-- Project tests and coverage: `uv run pytest projects/working/bond/bond-coordinator/tests/ --cov=projects/working/bond/bond-coordinator/src --cov-fail-under=90`
-- Stage 02 analysis must write `output/data/optimization_results.csv` before strict manuscript-variable generation: `uv run python scripts/pipeline/stage_02_analysis.py --project templates/bond-coordinator`
-- Stage 03 manuscript render: `uv run python scripts/pipeline/stage_03_render.py --project templates/bond-coordinator`
-- Stage 04 output validation: `uv run python scripts/pipeline/stage_04_validate.py --project templates/bond-coordinator`
-- Repo drift gate: `uv run python scripts/audit/check_template_drift.py --strict`
-- Code quality: `uv run ruff check projects/working/bond/bond-coordinator/src/` and `uv run mypy projects/working/bond/bond-coordinator/src/` must both pass clean.
-- Benchmark reproducibility: tracked benchmark reports and figures contain only deterministic facts; wall-clock timing is logged as a runtime diagnostic, and two-run byte-equality tests enforce the boundary.
-- Live test count and measured coverage percentage → [`docs/_generated/COUNTS.md`](../../../docs/_generated/COUNTS.md) (regenerated, never hardcoded here; both numbers drift faster than this file).
+- Phase 1 build complete and green: registry + ledger + status + situation
+  room + manuscript variables, all with a zero-mock real-data test suite.
+- Verified: `uv run pytest tests/ --cov=src --cov-fail-under=90` passes
+  (coverage well above the 90% gate); `ruff check`, `ruff format --check`, and
+  `mypy` clean on `src/bond_coordinator` and `scripts/`.
 
-## Accuracy pass — 2026-08-02 (measured)
+## Integration points (dependencies not yet built)
 
-- Prerender: clean (no render-blocking pitfalls, no undefined citations).
-- pytest: **242 passed**, **97.67 %** coverage on `src/` (floor 90 %).
-- Stage 02: 8/8 analysis scripts; 46 manuscript variables generated.
-- Stage 03: combined PDF rendered (25 pages), `Valid PDFs: 1/1`; 0 `^! ` lines in compile logs; 0 `??` in `pdftotext`.
-- Stage 04: all checks pass (PDF, bookends, markdown, structure, figure registry, evidence registry, design overlays, artifact manifest); rendered-provenance receipt written (54 sources / 18 config / 72 outputs).
-- Drift: `check_template_drift.py --project templates/bond-coordinator --strict` → no drift detected.
+`bond-coordinator` depends on `bond-api` (Layer 1) and `bond-utilities`
+(Layer 0), neither of which is built yet.  As instructed, this package ships a
+**pure-core** implementation and defers integration:
 
-### Fixed in this pass
+1. **Protocol types** (`bond-api`).  `src/bond_coordinator/types.py` carries a
+   pure-core mirror of the Layer-1 shapes (`Asset`, `Gadget`, `GadgetRegistry`,
+   `PackageStatus`, `MissionPhase`) with identical field names/semantics per
+   `SCOPE.md` §3.2.  **When `bond-api` lands**, swap `registry.py`/`types.py`
+   to import from `bond_api.registry` — the swap is a single import and changes
+   no public API.  The runtime probe in `scripts/{status_report,build_situation_room}.py`
+   already reports `dependency_ready` and flips on automatically.
+2. **Provenance I/O** (`bond-utilities`).  `MissionLedger.to_json/from_json`
+   and the `scripts/advance_mission.py` persistence are local stdlib
+   equivalents of `bond-utilities` `mission_io`.  When available, route ledger
+   persistence through `mission_io` for shared provenance conventions.
 
-- `fig:complexity` caption corrected to the actual 3×2 six-panel layout; replaced the false "both saturate at the iteration cap" claim (α=2.5 terminates via `non_finite`) and described the stability-width and cross-profile bottom panels.
-- Agency-category boundary corrected to the code's `α < 0.3` threshold (`manuscript/03_results.md`).
-- Removed literal `{{CONFIG_*}}` / `{{RESULT_*}}` wildcard prose in `01_introduction.md` and `07_scope_and_related_work.md` so the rendered PDF no longer leaks raw braces.
-- `scripts/AGENTS.md` + `scripts/README.md`: listed the on-disk `04_benchmark_stage.py`, `08_connector_search.py`, `09_provenance_record.py`, `10_research_workflow.py`, `__init__.py`; replaced stale `[0.01, 0.05, 0.1, 0.2]` step-size grids with the configured six-value grid.
-- `tests/AGENTS.md` + `tests/README.md`: added `test_benchmark_support.py` to diagram, class line, and bullets.
-- Root `AGENTS.md`: refreshed `SRC_F` / `M_F` mermaid listings, ProgressBar grid, stray `##` heading.
-- `docs/AGENTS.md`: corrected the `{{VARIABLE}}` token count (28 → 46) and stale per-file line counts; `docs/syntax_guide.md`: `CONFIG_VERSION` 2.5.2, added missing `RESULT_*` / `ARTIFACT_*` / `STABILITY_FUNCTION` rows, corrected the "never use `\begin{equation}`" guidance (the manuscript uses that form and it resolves).
-- `manuscript/AGENTS.md`: version 2.5.2; File Inventory token lists now match the live per-file `{{TOKEN}}` usage exactly (verified programmatically).
-- `docs/README.md`: removed the stale "127 files, 14 subdirectories" literal (COUNTS.md is authoritative).
-- Added `.agents/README.md` and `.agents/skills/README.md` per the shared exemplar catalog contract; all relative cross-references resolve.
+## Roadmap
 
-## Integrity and template-status gaps
+- [x] `src/bond_coordinator/registry.py` — 27-film ROSTER, codenames, status/coverage.
+- [x] `src/bond_coordinator/ledger.py` — lifecycle phases, forward-only rules, audit trail, staleness, JSON.
+- [x] `src/bond_coordinator/status.py` — aggregate counts, coverage summary, stale/blocked flags.
+- [x] `src/bond_coordinator/situation.py` — HTML situation room (packages + gadgets).
+- [x] `src/bond_coordinator/manuscript_variables.py` — config identity + registry tokens.
+- [x] Thin `scripts/` (status_report, advance_mission, build_situation_room, z_generate_manuscript_variables).
+- [x] Zero-mock, deterministic test suite (5-film fixture + full-registry checks).
+- [x] Re-identity: README, AGENTS, TODO, docs, manuscript, CITATION, domain/experiment overlays.
+- [ ] Wire real `bond-api` registry types when Layer 1 is built (see above).
+- [ ] Route ledger provenance through `bond-utilities` `mission_io`.
+- [ ] Consume `bond-ops` aggregate gate output to update `registry.py`
+      status/coverage (currently all packages are honest `scaffolded`/`None`).
+- [ ] Supply-recorded gadget inventory from film packages into the situation room
+      (currently the gadget registry is fed by `output/data/gadgets.json` if present).
 
-- Keep this exemplar as the smallest reliable control-positive path for code-centric research projects.
-- Keep dashboard, API docs, figures, and manuscript variables generated from source, not hand-maintained output snapshots.
-- Add a project-local output validation script only if it checks artifacts beyond the generic Stage 04 validators.
-- Add or document a stable final artifact-manifest refresh path for single-stage analysis/render/copy checks. **Documented:** `infrastructure.core.pipeline.artifacts.snapshot_current_artifact_manifest` serves this role.
+## Guardrails (persistent)
 
-## Configurable-surface gaps
-
-- Keep `manuscript/config.yaml.example` as the richer copy-and-customize template for publication, LLM, testing, and steganography toggles.
-- Add any future optimizer hyperparameter config under typed source loaders rather than reading ad hoc YAML from scripts.
-
-## Documentation and signposting gaps
-
-- Keep README quick-start commands aligned with the qualified project name `templates/bond-coordinator`.
-- Link new public artifacts from README, AGENTS, and `docs/_generated/exemplar_roster.md` through the generator.
-
-## Test and validator gaps
-
-- Add a negative control before widening optimizer claims beyond the bundled deterministic objectives.
-- Add dashboard schema assertions whenever dashboard fields or chart payloads change.
-- Close remaining infrastructure-path branch misses in `analysis/scientific_reports.py` and `analysis/workflow.py` with subprocess isolation tests mirroring `TestImportFallback` if coverage gates tighten further.
-
-## Ordered improvement ladder
-
-1. Preserve the strict analysis-to-manuscript variable contract.
-2. Add focused validators for any new generated artifact family.
-3. Expand benchmark scenarios only with deterministic seeds, expected-shape tests, and documented claim boundaries.
-4. Refresh generated docs after any public-surface change.
+- Zero-mock testing; real data + computation only.
+- ≥90% line+branch coverage on `src/` (`--cov-fail-under=90`).
+- Deterministic: fixed seeds/clocks; no untracked random reliance.
+- Thin orchestrators in `scripts/`; business logic in `src/`.
+- `ruff` + `mypy` clean on `src/bond_coordinator` and `scripts/`.
+- Local-only: never push to any remote (there is none).  Commit path-scoped
+  inside this package only.

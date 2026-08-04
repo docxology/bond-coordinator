@@ -1,24 +1,41 @@
 # Scope, Related Work, and Positioning {#sec:scope}
 
-This section situates the exemplar scientifically and states explicit boundaries. The goal is not to compete with monographs on nonlinear programming [@nocedal2006numerical; @bertsekas1999nonlinear], but to show how a minimal, test-backed optimization story fits the template's reproducibility and rendering stack [@peng2011reproducible].
+## Scope
 
-## Classical gradient methods
+{{CONFIG_TITLE}} is **Layer 2 (mission control)** of {{CONFIG_SUITE_NAME}}.
+Its scope is exactly the four modules under `src/bond_coordinator/` and their
+thin `scripts/` orchestrators.  It implements **no film algorithms** and makes
+**no cross-film computation**: those belong to the 27 film packages.  It does
+not orchestrate missions across packages (that is Layer 3, `bond-orchestrator`)
+and does not expose a front door (that is Layer 4, `bond-cli`).
 
-Smooth unconstrained minimization via first-order updates has a long lineage, from Cauchy's early descent perspective [@cauchy1847methode] to modern treatments of convex problems [@boyd2004convex] and accelerated gradient schemes [@nesterov2013gradient]. Polyak's classical discussion of gradient convergence factors remains relevant when interpreting empirical iteration counts [@polyak1964some]. The present manuscript restricts attention to **fixed-step** gradient descent on a **convex quadratic**, where rates reduce to scalar linear recurrences in the error ([@sec:results], [@eq:scalar_linear_update]).
+Within that boundary this package is deliberately standalone.  Its `src/` core
+is pure — no `infrastructure.*`, no sibling-package imports — so the registry,
+ledger, status, and situation room can run in any Python 3.10+ environment with
+`pyyaml` installed, exactly as the exemplar's mathematical core could.
 
-## Adaptive and stochastic extensions
+## Related work
 
-Practical machine-learning optimizers (e.g., Adam [@kingma2014adam]) introduce momentum, adaptive preconditioning, or noise from minibatching. Those methods are **out of scope** for `bond-coordinator`: the exemplar deliberately keeps the algorithm minimal so that failures (divergent $\alpha$, iteration caps) are interpretable without confounding from stochastic sampling or line-search logic.
+The package inherits the research-exemplar's standards — ≥90% zero-mock
+coverage, pure tested cores, thin orchestrators, injected manuscript variables
+[@hunt1999pragmatic; @gamma1995designpatterns] — and applies the design-pattern
+vocabulary of software architecture [@bass2012softwarearchitecture] and
+enterprise registries [@fowler2002patterns] to a multi-package fleet.  The
+central claim — that a machine-checkable registry and append-only ledger make
+fleet health an executable fact — follows the "essence vs. accidents" framing
+of software complexity [@brooks1987nosilverbullet].
 
-## What this project proves about the template
+## Positioning within the fleet
 
-The scientific claims through [@sec:introduction], [@sec:methodology], and [@sec:results] are standard textbook material. The **non-standard** contribution is procedural: configuration in `manuscript/config.yaml` drives `run_convergence_experiment()`, figures, CSV exports, and `RESULT_*` token substitution (`scripts/z_generate_manuscript_variables.py`) so that PDF, HTML, and validation logs refer to the same numbers. That pattern is what downstream projects should copy—whether the domain is optimization, differential equations, or Bayesian workflows.
+| Concern | Package |
+|---|---|
+| Q-branch primitives (ciphers, clocks, seeds) | `bond-utilities` (Layer 0) |
+| Protocol types (`MissionBrief`, `Asset`, `GadgetRegistry`) | `bond-api` (Layer 1) |
+| **Registry, ledger, status, situation room** | **`bond-coordinator` (this package, Layer 2)** |
+| Multi-package mission DAG | `bond-orchestrator` (Layer 3) |
+| CLI front door / fleet ops | `bond-cli` / `bond-ops` (Layer 4) |
 
-## Explicit limitations
-
-1. **Dimensionality**: Default experiments emphasize $d = 1$ with $A = I$ for transparent plotting; the benchmark figure explores $d > 1$ only with identity Hessians, so no ill-conditioning effects appear.
-2. **Step-size policy**: Only constant $\alpha$ is implemented in `src/optimizer.py`; there is no Wolfe or Armijo backtracking.
-3. **Global optimization**: Convexity is assumed; no basin-hopping or restarts are studied.
-4. **Numerical model**: Double-precision floating point only; no interval or arbitrary-precision analysis.
-
-These limitations are intentional: they narrow the failure surface so that infrastructure concerns—tests, logging, figure registration, and PDF cross-references—remain visible rather than buried under algorithmic complexity.
+Because Layers 0–1 are not yet built, this package carries a pure-core mirror
+of the protocol shapes (`src/bond_coordinator/types.py`) with a documented
+swap point; the swap is mechanical and does not change the public API (see
+`TODO.md`).

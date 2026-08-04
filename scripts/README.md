@@ -1,70 +1,21 @@
-# scripts/ - Analysis Scripts
+# scripts/
 
-**Thin Orchestrators** demonstrating strict integration patterns. As per the Generalized Research Template policy, these scripts *do not contain core logic*. They only import from the `src/` directory and bridge results into the `infrastructure/` components for logging, rendering, and reporting.
+Thin orchestrators for `bond-coordinator` (all business logic lives in
+`src/bond_coordinator/`).
 
-## Quick Start
+```
+status_report.py                    print/persist suite status (--json)
+advance_mission.py                  advance a package's phase in the ledger
+build_situation_room.py             regenerate output/situation_room.html
+z_generate_manuscript_variables.py  hydrate manuscript {{TOKEN}}s (runs last)
+```
 
 ```bash
-# Run analysis pipeline
-uv run python scripts/optimization_analysis.py
-
-# View generated outputs
-ls -la ../output/
+uv run python scripts/status_report.py
+uv run python scripts/advance_mission.py --slug goldfinger --phase recon
+uv run python scripts/build_situation_room.py
+uv run python scripts/z_generate_manuscript_variables.py
 ```
 
-## Key Features
-
-- **analysis pipeline** (experiments + visualization)
-- **Automated figure generation** (convergence plots)
-- **Data export** (optimization results to CSV)
-- **Manuscript integration** (figure registration)
-
-## Common Commands
-
-### Run Analysis
-
-```bash
-uv run python optimization_analysis.py
-```
-
-Executes optimization experiments and generates all outputs.
-
-### Check Outputs
-
-```bash
-ls -la ../output/figures/
-ls -la ../output/data/
-```
-
-## Scripts
-
-| Script | Role | Pipeline |
-| --- | --- | --- |
-| `optimization_analysis.py` | Main analysis pipeline (experiments, figures, reports) | Required |
-| `build_dashboard.py` | Interactive HTML dashboard + invariants report | Required |
-| `04_benchmark_stage.py` | `infrastructure.benchmark` rubric demo | Optional |
-| `08_connector_search.py` | Connector search stage (opt-in `science`) | Optional |
-| `09_provenance_record.py` | Provenance DAG record (opt-in) | Optional |
-| `10_research_workflow.py` | Research workflow dispatch (opt-in) | Optional |
-| `z_generate_manuscript_variables.py` | Manuscript `{{TOKEN}}` hydration (runs last; `z_` prefix) | Required |
-| `generate_api_docs.py` | Writes `output/docs/api_reference.md` | AESTHETIC (smoke-tested) |
-| `00_preflight.py` | Puppeteer/mmdc pre-render warning | AESTHETIC (smoke-tested; exit 0 or 1) |
-
-Full API and smoke-test notes: [`AGENTS.md`](AGENTS.md).
-
-## Architecture
-
-```mermaid
-graph TD
-    OA[optimization_analysis.py] --> SA[src/analysis/]
-    BD[build_dashboard.py] --> SD[src/dashboard.py]
-    ZGEN[z_generate_manuscript_variables.py] --> MV[src/manuscript_variables.py]
-    SA --> OPT[src/optimizer.py]
-    SA --> FIG[src/figures/]
-    GD[generate_api_docs.py] --> DOC[src/documentation.py]
-    PF[00_preflight.py] --> INFRA[infrastructure.rendering.preflight]
-```
-
-## More Information
-
-See [AGENTS.md](AGENTS.md) for technical documentation.
+Thin by design: `ruff` + `mypy` clean, smoke-tested in
+`tests/test_scripts_smoke.py`.

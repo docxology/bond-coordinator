@@ -1,90 +1,61 @@
-# Architecture: The Thin Orchestrator Flow
+# Architecture — bond-coordinator
 
-The `bond-coordinator` exemplar is designed around a strict separation of concerns across three operational layers. Understanding this architecture before modifying any file prevents the most common errors: math appearing in scripts, reusable project logic remaining trapped in CLI files, and mocks appearing in tests.
-
-## Layer Reference
-
-| Layer | Primary Files | Public API | Invariants | Testability |
-|---|---|---|---|---|
-| **`src/` — Project Logic** | `src/optimizer.py`, `src/invariants.py`, `src/experiment_config.py`, `src/analysis/`, `src/figures/`, `src/dashboard.py`, `src/manuscript_variables.py` | Optimizer primitives plus importable analysis/figure/dashboard builders | Math primitives stay pure; `experiment_config.py` is the single loader for `manuscript/config.yaml` → `experiment:` | Direct unit tests for pure logic; integration tests for generated artifacts |
-| **`scripts/` — Orchestrators** | `scripts/optimization_analysis.py`, `scripts/build_dashboard.py`, `scripts/z_generate_manuscript_variables.py`, `scripts/generate_api_docs.py`, `scripts/00_preflight.py` | CLI compatibility wrappers and script entry points | No experiment, plotting, dashboard, or manuscript-variable logic lives only in scripts; `00_preflight` and `generate_api_docs` are AESTHETIC | Subprocess/integration tests exercise real commands |
-| **`infrastructure/` — Cross-Cutting** | `infrastructure/scientific/`, `infrastructure/reporting/`, `infrastructure/rendering/`, `infrastructure/core/`, `infrastructure/validation/` | Stability checks, benchmarking, PDF rendering, structured logging, progress bars | Generic reusable behavior only; no project-specific assumptions | Covered by separate `tests/infra_tests/` suite |
-
-## Strict Dependency Direction
+## Layers
 
 ```
-scripts/ ──→ src/            (imports and calls project behavior)
-src/optimizer.py ──→ [stdlib + numpy only]
-src/analysis/ ──→ infrastructure/ (project-specific generation via reusable services)
-src/benchmark_support.py ──→ infrastructure.benchmark (declared adapter)
-tests/   ──→ src/            (direct testing of importable project behavior)
-tests/   ──→ scripts/        (CLI compatibility smoke tests)
+scripts/            thin orchestrators (argv, file I/O, bond_api probe)
+  │  imports only
+  ▼
+src/bond_coordinator/   PURE CORE (stdlib + pyyaml; no infrastructure, no siblings)
+  ├── types.py               Asset, Gadget, GadgetRegistry, PackageStatus, MissionPhase
+  ├── registry.py            PackageRecord, ROSTER (27), get_package, find_by_status, subset_roster
+  ├── ledger.py              LedgerEntry, MissionLedger (transitions, audit, staleness, JSON)
+  ├── status.py              CoverageSummary, BlockedPackage, SuiteStatus, build_status
+  ├── situation.py           build_situation_room, write_situation_room
+  └── manuscript_variables.py  load_config, generate_variables, resolve_manuscript_tree
 ```
 
-No arrows go upward. Core mathematical code stays independent; project analysis modules may call infrastructure because they are the importable implementation behind the thin script wrappers.
+**Dependency arrow is strictly downward.**  `src/` never imports
+`infrastructure.*` or a sibling BOND package; `scripts/` imports `src/` only.
+The one deliberately external probe is `scripts/` checking whether `bond_api`
+(the future Layer 1) is importable — it reports `dependency_ready` and never
+fails when absent.
 
-```mermaid
-graph TD
-    YAML[manuscript/config.yaml] -->|experiment:| CFG[src/experiment_config.py]
+## Module responsibilities
 
-    A[scripts/optimization_analysis.py] -->|delegates| A2[src/analysis/]
-    A2 -->|reads| CFG
-    A2 -->|pure math calls| B[src/optimizer.py]
-    A2 -->|figures| FIG[src/figures/]
-    FIG -->|reads| CFG
-    FIG --> B
+- **`registry.py`** — the authoritative 27-film ROSTER (canon order), the
+  `PackageRecord` shape, and lookup helpers.  Status/coverage are honest
+  (currently all `scaffolded`/`None`); they change only from measured gate
+  output.
+- **`ledger.py`** — forward-only mission lifecycle per package, append-only
+  audit trail, staleness.  Pure JSON codecs (`to_json`/`from_json`) for
+  provenance; only `scripts/advance_mission.py` touches disk.
+- **`status.py`** — `build_status(roster, ledger, now=, stale_days=,
+  dependency_ready=)` → one deterministic `SuiteStatus` snapshot with
+  stale/blocked flags and a coverage summary.
+- **`situation.py`** — renders `SuiteStatus` + roster + ledger + `GadgetRegistry`
+  into one self-contained, HTML-escaped document.
+- **`manuscript_variables.py`** — identity from `manuscript/config.yaml`,
+  fleet counts from registry/status, `{{TOKEN}}` map + tree resolution.
 
-    DB[scripts/build_dashboard.py] --> DASH[src/dashboard.py]
-    DASH -->|reads| CFG
+## Integration point (bond-api)
 
-    I[scripts/z_generate_manuscript_variables.py] -->|calls| I2[src/manuscript_variables.py]
-    I2 -->|reads| CFG
-    I2 -->|reads| J[output/data/]
-    I2 -->|writes| K[output/manuscript/]
+When `bond-api` lands, `types.py`/`registry.py` swap to import the real
+protocol types from `bond_api.registry`.  The public API is unchanged, so
+nothing else in the package moves (see `TODO.md`).
 
-    L[tests/test_optimizer.py] -->|unit tests| B
-    M[tests/test_analysis_integration.py] -->|integration| A2
-    MAC[tests/test_analysis_coverage.py] -->|branch coverage| A2
-    TSS[tests/test_scripts_smoke.py] -->|AESTHETIC CLI| PF[scripts/00_preflight.py]
-    TSS --> GD[scripts/generate_api_docs.py]
-    TDOC[tests/test_documentation.py] -->|unit tests| DOC[src/documentation.py]
+## Intentional divergence from the exemplar
 
-    B --> N((No imports from this repo))
-```
+The exemplar's strict *analysis → manuscript-variables* contract is relaxed:
+the coordinator has no analysis outputs, so `generate_variables` never gates
+on generated files (`require_outputs` is accepted for parity only).  Documented
+in `manuscript/05_experimental_setup.md`.
 
-## Infrastructure Modules Used by This Project
+## How to add a capability
 
-| Module | Imported From | Used For |
-|---|---|---|
-| `infrastructure.scientific.stability` | `src/analysis/` | `check_numerical_stability()` across starting-point / step-size grid |
-| `infrastructure.scientific.benchmarking` | `src/analysis/` | `benchmark_function()` across problem dimensions |
-| `infrastructure.benchmark` | `src/benchmark_support.py` | Score deterministic benchmark facts; wall-clock observations stay runtime-only |
-| `infrastructure.core.logging.utils` | `scripts/*.py` | `get_logger(__name__)` for structured log output |
-| `infrastructure.core.progress` | `src/analysis/` | `ProgressBar` progress bars for long-running loops |
-| `infrastructure.reporting` | `src/analysis/`, `src/dashboard.py` | HTML dashboard generation, pipeline metrics |
-| `infrastructure.validation` | `src/analysis/` | Output integrity checks on generated figures and CSV |
-
-## Forbidden Patterns
-
-| Pattern | Why It Is Forbidden | Correct Alternative |
-|---|---|---|
-| Math inside `scripts/` (e.g., gradient update step) | Cannot be unit-tested without running the full script | Move to `src/`, add a test in `TestGradientDescent` |
-| `from infrastructure import ...` in `src/optimizer.py` | Breaks mathematical-layer purity | Keep optimizer primitives pure; call infrastructure from `src/analysis/` or `src/dashboard.py` |
-| `print()` inside `scripts/` | Bypasses structured logging; lost in CI output | Use `get_logger(__name__).info(...)` |
-| Hardcoded absolute output paths in pure math modules | Makes copied projects brittle | Keep paths relative to the project root and isolated to analysis/dashboard/manuscript-variable modules |
-| `unittest.mock`, `MagicMock`, `@patch` in `tests/` | Zero-mock policy | Compute real results with real numpy arrays |
-| Hardcoded step-size constants in `scripts/` or duplicate YAML parsing in `src/` | Configuration drift vs `manuscript/config.yaml` | Use `load_experiment_config()` from `src/experiment_config.py` |
-
-## How to Add a New Algorithm
-
-Follow these five steps in order:
-
-1. **Add the function to `src/optimizer.py`** — Pure math only; no I/O; add type hints and a Google-style docstring; export from `__init__.py`.
-
-2. **Write a test class in `tests/test_optimizer.py`** — Follow the zero-mock pattern; use fixed numpy arrays; assert mathematical properties; run `uv run pytest projects/working/bond/bond-coordinator/tests/ --cov=projects/working/bond/bond-coordinator/src --cov-fail-under=90`.
-
-3. **Add the analysis call in `src/analysis/`** — Import the new function from `src/optimizer.py`; run it inside the existing experiment loop or add a new loop; write results to `projects/working/bond/bond-coordinator/output/data/` or `output/figures/`.
-
-4. **Update output conventions** — Document the new output file in `docs/output_conventions.md`; generated `output/` files stay untracked.
-
-5. **Update manuscript section** — Edit `manuscript/02_methodology.md` with the algorithm description using concrete file paths (e.g., `projects/working/bond/bond-coordinator/src/optimizer.py::new_function()`); add any result variables to `src/manuscript_variables.py::generate_variables()`; reference figures with `\ref{fig:label}`.
+1. Put the business logic in `src/bond_coordinator/` (pure — no I/O, no
+   infra imports).
+2. Expose it through `__init__.py`.
+3. Test it with real data (≥90%, zero mocks), covering error paths.
+4. Add a thin `scripts/` wrapper only if it needs argv/file I/O.
+5. Update this file, `src/AGENTS.md`, `README.md`, and `manuscript/SYNTAX.md`.

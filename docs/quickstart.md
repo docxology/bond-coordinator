@@ -1,89 +1,55 @@
-# Quick Start Guide
+# Quickstart — bond-coordinator
 
-Get up and running with the `bond-coordinator` exemplar in 5 minutes.
+5-minute first-run walkthrough.
 
-## Prerequisites
-
-- Python 3.10 or higher
-- [`uv`](https://github.com/astral-sh/uv) package manager (repo invariant — see the root `CLAUDE.md`)
-- Git
-
-## Setup (One-Time)
+## 1. Install
 
 ```bash
-# 1. Clone the template repository (if you haven't already)
-git clone https://github.com/docxology/template.git
-cd template
-
-# 2. Install dependencies at the repository root
-uv sync
-
-# 3. Verify installation
-uv run python --version
+cd projects/working/bond/bond-coordinator
+uv sync --extra dev
 ```
 
-## Run the Test Suite
-
-Validate the environment and check that the project test suite passes with the ≥90% coverage gate:
+## 2. Run the gate
 
 ```bash
-uv run pytest projects/working/bond/bond-coordinator/tests/ -v --tb=short
+uv run pytest tests/ --cov=src --cov-fail-under=90
 ```
 
-Expected: passing tests and coverage above the 90% gate. Live collection counts are tracked in [`../../../docs/_generated/COUNTS.md`](../../../../docs/_generated/COUNTS.md).
-
-## Execute the Analysis Pipeline
-
-Generate figures, data, reports, and the analysis dashboard:
+## 3. Drive mission control
 
 ```bash
-uv run python projects/working/bond/bond-coordinator/scripts/optimization_analysis.py
+# Fleet status (human + JSON); also writes output/data/suite_status.json
+uv run python scripts/status_report.py
+uv run python scripts/status_report.py --json
+
+# Advance a package's phase (persists output/data/mission_ledger.json)
+uv run python scripts/advance_mission.py --slug goldfinger --phase recon \
+    --by agent-007 --version 0.1.0
+
+# Render the situation room (output/situation_room.html)
+uv run python scripts/build_situation_room.py
+
+# Hydrate manuscript tokens (output/manuscript/*.md)
+uv run python scripts/z_generate_manuscript_variables.py
 ```
 
-**Outputs created under `projects/working/bond/bond-coordinator/output/`:**
-- `figures/` — 6 PNG plots (convergence, stability, benchmarks)
-- `data/` — CSV and JSON results
-- `reports/` — HTML dashboard and validation JSON
-- `manuscript/` — token-substituted markdown sections
-- `citations/` — APA/BibTeX/MLA citations
+## 4. Inspect the fleet programmatically
 
-## Render the Publication PDF
+```python
+from bond_coordinator import build_roster, MissionLedger, build_status
 
-Convert the manuscript to a PDF with LaTeX:
-
-```bash
-uv run python scripts/pipeline/stage_03_render.py --project templates/bond-coordinator
+roster = build_roster()                       # 27 film packages
+ledger = MissionLedger(roster)
+ledger.advance("goldfinger", "agent-007", "0.1.0")
+status = build_status(roster, ledger)
+print(status.counts_by_status)
+print([r.codename for r in roster[:5]])
 ```
 
-Final PDF: `projects/working/bond/bond-coordinator/output/pdf/template_code_project_combined.pdf`
+## What you should see
 
-## View Results
-
-- **PDF manuscript**: open `projects/working/bond/bond-coordinator/output/pdf/template_code_project_combined.pdf`
-- **HTML dashboard**: open `projects/working/bond/bond-coordinator/output/web/dashboard.html` (via `scripts/build_dashboard.py`)
-- **Figures**: browse `projects/working/bond/bond-coordinator/output/figures/`
-- **Data**: `cat projects/working/bond/bond-coordinator/output/data/optimization_results.csv`
-
-## Common Next Steps
-
-- **Change step sizes**: edit `projects/working/bond/bond-coordinator/manuscript/config.yaml` → `experiment.step_sizes`, then re-run steps 2–4.
-- **Add a new algorithm**: extend `src/optimizer.py`, add tests in `tests/test_optimizer.py`, and call it from the analysis script (see `docs/architecture.md`).
-- **Modify the manuscript**: edit markdown files under `projects/working/bond/bond-coordinator/manuscript/`, then hydrate variables and re-render (steps 3–4).
-
-## Getting Help
-
-- **Full documentation**: [`docs/README.md`](README.md) — navigation hub
-- **Agent rules**: [`docs/agent_instructions.md`](agent_instructions.md) — critical constraints before modifying code
-- **Troubleshooting**: [`docs/troubleshooting.md`](troubleshooting.md) — common issues and fixes
-- **FAQ**: [`docs/faq.md`](faq.md)
-
-## Quick Command Reference
-
-| Task | Command |
-|---|---|
-| Run tests | `uv run pytest projects/working/bond/bond-coordinator/tests/ -v` |
-| Run analysis | `uv run python projects/working/bond/bond-coordinator/scripts/optimization_analysis.py` |
-| Hydrate manuscript variables | `uv run python projects/working/bond/bond-coordinator/scripts/z_generate_manuscript_variables.py` (strict; requires analysis CSV; add `--allow-draft` for early drafts) |
-| Render PDF | `uv run python scripts/pipeline/stage_03_render.py --project templates/bond-coordinator` |
-| Copy final deliverables | `uv run python scripts/pipeline/stage_05_copy.py --project templates/bond-coordinator` |
-| Clean outputs | `rm -rf projects/working/bond/bond-coordinator/output/` |
+- `status_report.py` prints `BOND — MISSION CONTROL`, `Packages: 27 total`,
+  and by-status/by-phase counts (all scaffolded / all brief on a fresh ledger).
+- The situation room shows all 27 slugs and, until gadgets are supplied, a
+  "No gadgets registered yet" note.
+- `.venv/` and `output/` are created locally and gitignored.

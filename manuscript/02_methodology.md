@@ -1,83 +1,64 @@
 # Methodology {#sec:methodology}
 
-This section describes the implementation methodology, explicitly detailing how the optimization algorithms are constructed, validated, and analyzed using the Generalized Research Template's `infrastructure` and `tests` ecosystems.
+All four modules live under `src/bond_coordinator/` and are pure: they import
+only the standard library and `pyyaml`, never `infrastructure.*`, and never a
+sibling BOND package.  Thin orchestrators in `scripts/` bind them to the
+filesystem (persisting the ledger, writing the dashboard, printing the report).
 
-## Algorithm Implementation
+## Registry
 
-### Gradient Descent Algorithm
+`registry.py` defines a frozen `PackageRecord` (rank, slug, film, year,
+codename, status, coverage, concepts) and the module-level `ROSTER` tuple of
+all 27 film packages, in Eon-canon order then non-Eon, exactly per `SCOPE.md`
+§2.1.  Status is the enum `scaffolded | building | ready | red`; coverage is a
+measured percentage or `None`.  At the time of writing every package is a
+phase-0 scaffold, so all records start `scaffolded` with `coverage=None`.
+Mission codenames are **assigned by mission control** from each film's
+canonical plot element (e.g. Goldfinger's Operation Grand Slam → `GRAND SLAM`)
+and are provisional until a film package declares its own via `bond-api`.
 
-The core algorithm implements the iterative procedure for unconstrained optimization. The [`optimizer` module](https://github.com/docxology/template/blob/main/projects/working/bond/bond-coordinator/src/optimizer.py) uses the standard-library `logging` logger for optional verbose diagnostics; the [analysis orchestrator](https://github.com/docxology/template/blob/main/projects/working/bond/bond-coordinator/scripts/optimization_analysis.py) uses `infrastructure.core.logging.utils.get_logger`. Tests run under the hermetic boundaries defined in the [test configuration](https://github.com/docxology/template/blob/main/projects/working/bond/bond-coordinator/tests/conftest.py).
+The registry also provides `get_package`, `find_by_status`, and `subset_roster`
+(the last is how tests seed deterministic 5-film fixtures without depending on
+the whole fleet).
 
-**Algorithm — Gradient Descent (implemented in the [optimizer module](https://github.com/docxology/template/blob/main/projects/working/bond/bond-coordinator/src/optimizer.py#L87-L173))**
+## Mission-state ledger
 
-> **Input:** Initial point $x_0$, step size $\alpha$, tolerance $\epsilon$, max iterations $N_{\max}$
->
-> 1. Initialize $k \leftarrow 0$
-> 2. **While** $k < N_{\max}$ **do:**
->    - Compute gradient $g_k = \nabla f(x_k)$
->    - **If** $\|g_k\|_2 < \epsilon$ **then return** $x_k$ *(converged)*
->    - Update: $x_{k+1} \leftarrow x_k - \alpha \cdot g_k$
->    - $k \leftarrow k + 1$
-> 3. **Return** $x_k$ *(max iterations reached)*
+`ledger.py` tracks each package's position in the lifecycle
+{{CONFIG_MISSION_LIFECYCLE}}, encoded by the `MissionPhase` enum.  A
+`MissionLedger` holds the current entry per package plus an append-only list of
+every recorded transition.  The transition rules are strict and executable:
 
-## Infrastructure Integration
+1. A package must be registered in the roster.
+2. Phases move strictly forward: brief → recon → plan → execute → debrief.
+3. Re-entering the current phase is allowed (an idempotent *touch*).
+4. Moving backwards, or `advance` past debrief, raises `ValueError`.  `jump`
+   permits multi-step forward advances (still audible, still forward-only).
 
-The methodology explicitly bridges theoretical mathematics with production-grade validation through the `infrastructure.scientific` module.
+Every transition writes a frozen `LedgerEntry` (slug, phase, `updated_by`,
+`updated_at`, version, note), so the audit trail answers *who changed which
+package's state, when, and at what version*.  Staleness is a pure function of
+entry age and an injectable clock: a debriefed mission is never stale.
 
-### Numerical Stability Analysis
+## Suite status
 
-Rather than writing ad-hoc validation code, the project imports `infrastructure.scientific.stability.check_numerical_stability`. This utility subjects the objective function to a barrage of extreme inputs (NaN, Inf, $\pm 10^{10}$) to calculate a formalized stability score. If this score degrades, the [analysis orchestrator](https://github.com/docxology/template/blob/main/scripts/pipeline/stage_02_analysis.py) execution deliberately aborts, ensuring the methodology cannot enter unrecoverable states.
+`status.py::build_status(roster, ledger, ...)` assembles one deterministic
+snapshot: counts by status and by phase, a `CoverageSummary` (known count,
+mean/min/max over measured packages, count meeting the 90% gate), the set of
+stale packages, and a set of `BlockedPackage` reasons computed from the
+combination of status and phase:
 
-### Performance Benchmarking
+- a `red` package is blocked ("flagged red");
+- executing before ready is blocked;
+- planning while still scaffolded is blocked.
 
-The analysis exercises [`infrastructure.scientific.benchmarking.benchmark_function`](https://github.com/docxology/template/blob/main/infrastructure/scientific/benchmarking.py) as a runtime diagnostic. Host-dependent timing and memory observations are logged but excluded from tracked evidence. The canonical report records fixed inputs and exact objective values, while the dimensional figure reports deterministic convergence iterations and the proxy $d \times \text{iterations}$; neither surface claims that one host run proves an asymptotic bound.
+All time-dependent inputs (`now`, `stale_days`) are injectable so the report
+is reproducible byte-for-byte.
 
-## Convergence Analysis
+## Situation room
 
-For quadratic functions $f(x) = \frac{1}{2}x^T A x - b^T x$ where $A$ is positive definite, the convergence factor becomes [@bertsekas1999nonlinear]:
-
-\begin{equation}
-\label{eq:convergence_factor}
-\rho = \frac{|\lambda_{\max} - \alpha\lambda_{\min}|}{|\lambda_{\min} + \alpha\lambda_{\max}|}
-\end{equation}
-
-Optimal convergence occurs when $\alpha = \frac{2}{\lambda_{\min} + \lambda_{\max}}$, yielding $\rho = \frac{\kappa - 1}{\kappa + 1}$.
-
-## Experimental Setup
-
-### Step Size Analysis
-
-Step sizes are not chosen ad hoc in the manuscript: they are read from `experiment.step_sizes` in `manuscript/config.yaml` and passed through `run_convergence_experiment()` in `src/analysis/` (entry: `scripts/optimization_analysis.py`). The active grid for this build is:
-
-{{CONFIG_STEP_SIZES_BULLETS}}
-
-Labels follow the same agency taxonomy used for plot colours (`_agency_category` in the analysis script): **conservative** (small $\alpha$, slow but stable on $H=I$), **near-optimal** (including $\alpha=1$ where the method reaches $x^\ast$ in one step for this quadratic), **aggressive** ($1 < \alpha < 2$, still linearly contracting in $|x-x^\ast|$ but oscillatory in sign), and **divergent** ($|1-\alpha| \geq 1$).
-
-### Zero-Mock Testing Methodology
-
-The most critical aspect of the project's methodology is its validation framework. The project is governed by a strict Zero-Mock testing policy, evaluated actively by executing `uv run pytest projects/working/bond/bond-coordinator/tests/` during the infrastructure build phase.
-
-1. **Project tests**: [`projects/working/bond/bond-coordinator/tests/test_optimizer.py`](../tests/test_optimizer.py) exercises `src/optimizer.py` (typical, edge, boundary, and pathological inputs including NaN/Inf and zero gradients) and, when infrastructure imports succeed, call into `optimization_analysis.py` helpers—without mocks. Suite size: [`docs/_generated/COUNTS.md`](../../../../docs/_generated/COUNTS.md).
-2. **Infrastructure validation**: The repository-level `tests/infra_tests/` suite validates shared template modules (e.g. pipeline and discovery helpers) independently of this project’s manuscript.
-3. **Coverage Gates**: The [GitHub Actions CI workflow](https://github.com/docxology/template/blob/main/.github/workflows/ci.yml) enforces a mandatory ≥90% statement coverage gate on `projects/working/bond/bond-coordinator/src/` prior to treating the project as build-green.
-
-### Stopping rule and reporting
-
-`gradient_descent()` terminates when $\|\nabla f(x_k)\|$ falls below `experiment.tolerance`, when $k$ reaches `experiment.max_iterations`, or when an objective, gradient, or update becomes non-finite. The boolean `converged` plus `termination_reason` in exported CSV rows distinguish these outcomes. A non-finite candidate is rejected before it enters `objective_history`, preserving the last finite state for reproducible reporting. Downstream, `scripts/z_generate_manuscript_variables.py` aggregates the CSV into `RESULT_*` placeholders so tables and prose cannot drift from the last analysis run.
-
-### Figure generation contract
-
-Each figure in `03_results.md` maps to a generator in `src/figures/` (`generate_convergence_plot`, `generate_step_size_sensitivity_plot`, `generate_convergence_rate_plot`, `generate_complexity_visualization`, `generate_stability_visualization`, `generate_benchmark_visualization`), orchestrated by `src/analysis/` / `scripts/optimization_analysis.py`. Captions in the markdown intentionally name the function and the key parameters (tolerance lines, grids, dimensions) so reviewers can navigate from PDF to code without inferring hidden defaults.
-
-The same generator writes explicit `metadata.alt_text` for every registered
-figure. The alt text states what the visual encodes and preserves the boundary
-between deterministic observations and host-dependent diagnostics. Run the
-opt-in publication migration gate with
-`--require-figure-accessibility` to verify that every referenced figure has
-this metadata before promotion.
-
-## Analysis Pipeline & LaTeX Integration
-
-The automated analysis script leverages [`infrastructure.core.progress`](https://github.com/docxology/template/blob/main/infrastructure/core/progress.py) (`ProgressBar`, `SubStageProgress`) to orchestrate experiments, collect convergence trajectories, and generate publication-quality visualizations seamlessly.
-
-The research template supports advanced LaTeX customization through the `preamble.md` configuration. This is ingested directly by `infrastructure.rendering.latex_utils.py` and `pdf_renderer.py`, automatically linking compiled PGF plots and BibTeX citations. This automated approach ensures an unbreakable chain of custody from raw algorithmic execution to the final rendered manuscript.
+`situation.py::build_situation_room(status, roster, ledger, gadgets)` renders
+a single self-contained HTML document (no external assets, no JavaScript):
+summary cards, a per-package table (rank, slug, film, codename, status, phase,
+coverage), and the Q-branch gadget table.  Every value is HTML-escaped; the
+document is deterministic given its inputs.  `scripts/build_situation_room.py`
+writes it to the gitignored `output/` tree.

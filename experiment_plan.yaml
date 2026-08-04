@@ -1,25 +1,41 @@
+# experiment_plan.yaml — bond-coordinator
+#
+# The coordinator does not run numerical experiments; it maintains the fleet
+# state.  This plan declares the verification experiments that gate the
+# package: deterministic assertions over the registry, ledger, and status core.
+
 conditions:
-  - name: conservative_step
+  - name: registry_completeness
     role: reference
-    description: "Stable gradient-descent step below the spectral bound."
-  - name: near_optimal_step
+    description: "ROSTER holds exactly 27 unique, canon-ordered film packages with valid slugs, films, years, codenames, and concepts."
+  - name: ledger_forward_only
+    role: reference
+    description: "MissionPhase transitions are strictly forward-only; backwards or past-debrief moves raise; audit trail is append-only."
+  - name: status_aggregation
     role: proposed
-    description: "Template-recommended step near the stable convergence region."
-  - name: aggressive_step
+    description: "build_status aggregates counts by status/phase, the coverage summary, and stale/blocked flags from the registry + ledger."
+  - name: situation_determinism
     role: variant
-    description: "Stress condition near or above the stability boundary."
+    description: "The situation-room HTML is byte-identical across repeated builds with identical inputs, and HTML-escapes all values."
+
 metrics:
   primary:
-    name: objective_value
-    direction: minimize
-protocol: "Run the deterministic quadratic optimization sweep with identical initialization, seeds, tolerance, and iteration cap across all declared step-size conditions."
-expected_figures:
-  - fig:convergence_plot
-  - fig:performance_benchmark
-  - fig:step_size_sensitivity
+    name: coverage_pct
+    direction: maximize
+  secondary:
+    - name: transition_violations
+      direction: minimize
+    - name: output_byte_drift
+      direction: minimize
+
+protocol: "Run the zero-mock deterministic suite over a 5-film fixture plus full-registry completeness checks, with a fixed injected clock. Gate at >=90% line+branch coverage on src/."
+
+expected_figures: []
 expected_tables:
-  - tbl:optimization_results
+  - registry_roster
+  - status_counts
+
 baselines:
-  - conservative_step
+  - registry_completeness
 ablations:
-  - aggressive_step
+  - situation_determinism
