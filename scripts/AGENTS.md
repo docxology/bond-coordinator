@@ -4,8 +4,16 @@
 
 `scripts/` contains **thin orchestrators** only.  All business logic — registry
 content, transition rules, status aggregation, HTML generation, token maps —
-lives in `src/bond_coordinator/` and is tested there.  Scripts parse argv,
-touch files, probe for the future `bond-api`, and delegate to the pure core.
+lives in `src/bond_coordinator/` and is tested there — *interpretation* counts
+as business logic, which is why `reconcile.gadget_purpose` lives in `src/` and
+not inline here.  Scripts parse argv, touch files, discover film providers
+through `bond-api` (and probe its availability), and delegate to the pure core.
+
+**Cross-package reads must degrade, never abort.**  `reconcile.py` imports
+independently developed sibling packages; each film is guarded with
+`except Exception`, its failure printed to stderr with the exception type, and
+the slug recorded as skipped.  One broken sibling must never end a fleet-wide
+run, and a skip must never be silent.
 
 ## Scripts
 

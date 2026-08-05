@@ -11,10 +11,11 @@ modifying any project file.  It is the gate for the other documents.
 
 | File | Purpose |
 |---|---|
-| [`AGENTS.md`](AGENTS.md) | This index. |
-| [`agent_instructions.md`](agent_instructions.md) | **Read first.** 7 hard rules + verification checklist. |
-| [`architecture.md`](architecture.md) | Layer boundaries (pure `src/`, thin `scripts/`), integration point. |
-| [`testing_philosophy.md`](testing_philosophy.md) | Zero-mock policy, determinism, 5-film fixture, test inventory. |
+| **This file (`README.md`)** | The index you are reading. |
+| [`AGENTS.md`](AGENTS.md) | Technical overview of `docs/`: the layer contract, reading order, and which paths are REQUIRED vs conventional. |
+| [`agent_instructions.md`](agent_instructions.md) | **Read first.** The hard rules (layer boundary, coverage gate, determinism, cross-package degradation) + verification checklist. |
+| [`architecture.md`](architecture.md) | Module-by-module architecture of `src/`, how the pieces compose, and how this package consumes the frozen `bond_api` `MissionProvider`. |
+| [`testing_philosophy.md`](testing_philosophy.md) | Zero-mock policy, determinism, 5-film fixture, positive controls, test inventory. |
 | [`style_guide.md`](style_guide.md) | 7 source-style rules + formatting (ruff). |
 | [`syntax_guide.md`](syntax_guide.md) | `{{TOKEN}}` conventions; authoritative list = `generate_variables()` + cross-ref test. |
 | [`output_conventions.md`](output_conventions.md) | `output/` layout + regeneration rules. |

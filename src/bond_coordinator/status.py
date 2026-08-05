@@ -96,6 +96,10 @@ class SuiteStatus:
     dependency_ready: bool  # bond-api (Layer 1) available to the fleet
     generated_at: datetime
     layers: tuple[LayerSummary, ...] = ()
+    #: The staleness threshold this snapshot was computed with.  Carried on
+    #: the snapshot so downstream renderers state the threshold that was
+    #: actually applied instead of assuming the default.
+    stale_days: int = DEFAULT_STALE_DAYS
 
 
 def _coverage_summary(roster: tuple[PackageRecord, ...]) -> CoverageSummary:
@@ -231,6 +235,7 @@ def build_status(
         dependency_ready=dependency_ready,
         generated_at=reference,
         layers=_layer_summaries(roster, dependency_ready, layer_ready),
+        stale_days=stale_days,
     )
 
 

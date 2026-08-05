@@ -1,11 +1,17 @@
 """Protocol types for the BOND suite (Layer 1 mirror).
 
-bond-coordinator is Layer 2 (mission control) and consumes the protocol types
-that ``bond-api`` (Layer 1) will provide: :class:`Asset`, :class:`Gadget`, and
-:class:`GadgetRegistry`.  ``bond-api`` is not built yet, so this module carries
-the *pure-core mirror* of those shapes — same field names, same semantics —
-until the real package lands.  The swap point is a single import in
-:mod:`bond_coordinator.registry` (see ``TODO.md``, "Integration points").
+bond-coordinator is Layer 2 (mission control) and works with the protocol
+shapes ``bond-api`` (Layer 1) defines: :class:`Asset`, :class:`Gadget`, and
+:class:`GadgetRegistry`.  This module carries a *pure-core mirror* of those
+shapes — same field names, same semantics — so the core keeps its zero-sibling
+import rule.
+
+``bond-api`` **is built**; the mirror is a deliberate architectural boundary
+rather than a placeholder waiting on it.  Importing ``bond_api`` here would
+make the pure core depend on a sibling package, so the real protocol types are
+touched only by the thin orchestrator ``scripts/reconcile.py``, which converts
+them to plain data before calling into :mod:`bond_coordinator.reconcile`.  See
+``docs/architecture.md``, "Consuming the bond-api MissionProvider".
 
 Nothing in this module imports from the rest of the suite; it is stdlib-only.
 """

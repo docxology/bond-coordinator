@@ -136,6 +136,22 @@ class TestStaleFlags:
         status = build_status(sample_roster, fresh_ledger)
         assert status.stale_packages == ()
 
+    def test_snapshot_carries_the_threshold_it_applied(
+        self, aged_ledger, sample_roster
+    ) -> None:
+        """The applied threshold travels with the snapshot, not just its effect."""
+        from bond_coordinator import DEFAULT_STALE_DAYS
+
+        default = build_status(sample_roster, aged_ledger, now=FIXED_NOW)
+        assert default.stale_days == DEFAULT_STALE_DAYS
+
+        # 60 days > the 45-day entry age, so nothing is stale at this threshold.
+        relaxed = build_status(sample_roster, aged_ledger, now=FIXED_NOW, stale_days=60)
+        assert relaxed.stale_days == 60
+        assert relaxed.stale_packages == ()
+        # The threshold genuinely drives the outcome (not a carried constant).
+        assert default.stale_packages != relaxed.stale_packages
+
 
 class TestCountByStatus:
     def test_count_convenience_full_registry(self) -> None:

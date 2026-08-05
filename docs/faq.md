@@ -26,12 +26,32 @@ Assigned by mission control from each film's canonical plot element (e.g.
 Goldfinger → `GRAND SLAM`).  They are provisional until a film package declares
 its own codename via `bond-api` at merge time.
 
-## When will `bond-api` / `bond-utilities` be used?
+## Is `bond-api` used? Why does `src/` still mirror its types?
 
-When Layer 0–1 are built.  Until then `src/bond_coordinator/types.py` is a
-pure-core mirror of the protocol shapes; the swap is a single import (see
-`TODO.md`).  `scripts/` already probes for `bond_api` and reports
-`dependency_ready`.
+Yes — `bond-api` (Layer 1) is built, and `scripts/reconcile.py` uses
+`bond_api.discovery.load_provider` to read each film's real codename and
+gadget table.  `src/bond_coordinator/types.py` still mirrors the protocol
+shapes on purpose: importing a sibling package from the pure core would break
+the layer contract, so the real protocol types are touched only by the thin
+orchestrator, which converts them to plain data first.  The mirror is a
+boundary, not a placeholder.  `bond-utilities` (Layer 0) is not yet built; the
+ledger uses local stdlib JSON codecs until it is (see `TODO.md`).
+
+## The status report says `dependency_ready: false`. Is bond-api missing?
+
+Not necessarily — that field is an *importability* probe
+(`importlib.util.find_spec`), so it goes false whenever `bond_api` is not
+installed in the interpreter running the script.  The rendered wording says
+"not importable in this environment" rather than "not built" for exactly this
+reason.  Nothing in the pure core depends on it.
+
+## What happens when a film package is broken?
+
+It is skipped alone.  `scripts/reconcile.py` imports each film under its own
+`except Exception` guard and prints the slug plus the exception type and
+message to stderr, so one half-edited sibling can never abort reconciliation
+for the other 26.  See the positive control in
+`tests/test_reconcile.py::test_reconcile_isolates_a_broken_film`.
 
 ## Why is `output/` empty / not in git?
 

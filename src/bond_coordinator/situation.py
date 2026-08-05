@@ -18,14 +18,16 @@ from pathlib import Path
 
 from .ledger import MissionLedger
 from .registry import COORDINATOR_CODENAME, ROSTER, PackageRecord
-from .status import LayerSummary, SuiteStatus
+from .status import COVERAGE_FLOOR, LayerSummary, SuiteStatus
 from .types import Gadget, GadgetRegistry, MissionPhase, PackageStatus
 
 #: Recent-transition rows shown in the audit-trail timeline section.
 AUDIT_TRAIL_LIMIT = 12
 
-#: Coverage thresholds driving the heat coloring (aligned with COVERAGE_FLOOR).
-_HEAT_FLOOR = 90.0
+#: Coverage thresholds driving the heat coloring.  The upper bucket *is* the
+#: suite gate — imported rather than restated so the legend can never drift
+#: away from the number ``status.py`` actually enforces.
+_HEAT_FLOOR = COVERAGE_FLOOR
 _HEAT_WARN = 50.0
 
 
@@ -209,10 +211,13 @@ def build_situation_room(
             for item in status.blocked_packages
         )
 
+    # ``dependency_ready`` is an *importability* probe, not an existence claim:
+    # bond-api may be built and simply absent from this interpreter's
+    # environment, so the negative branch must not assert it does not exist.
     dependency_html = (
-        "available"
+        "importable (protocol available)"
         if status.dependency_ready
-        else "not yet built (pure-core mirror in use)"
+        else "not importable in this environment (pure-core mirror in use)"
     )
 
     layers_section = ""
@@ -286,7 +291,7 @@ def build_situation_room(
 <section>
   <h2>Blocked / stale flags</h2>
   <p>Blocked: <strong>{blocked_html}</strong></p>
-  <p>Stale missions (unfinished, no update in 30 days): <strong>{escape(str(len(status.stale_packages)))}</strong></p>
+  <p>Stale missions (unfinished, no update in {escape(str(status.stale_days))} days): <strong>{escape(str(len(status.stale_packages)))}</strong></p>
   <p>Layer 1 dependency (bond-api): <strong>{dependency_html}</strong></p>
 </section>
 
@@ -301,8 +306,8 @@ def build_situation_room(
 {_package_rows(roster, ledger)}
     </tbody>
   </table>
-  <p class="muted">Coverage heat: <span class="heat-ok">≥90%</span> ·
-    <span class="heat-warn">50–90%</span> · <span class="heat-bad">&lt;50%</span> ·
+  <p class="muted">Coverage heat: <span class="heat-ok">≥{_HEAT_FLOOR:.0f}%</span> ·
+    <span class="heat-warn">{_HEAT_WARN:.0f}–{_HEAT_FLOOR:.0f}%</span> · <span class="heat-bad">&lt;{_HEAT_WARN:.0f}%</span> ·
     <span class="heat-unknown">unmeasured</span>. Timeline cells: <span class="tl-done">done</span> ·
     <span class="tl-now">current</span> · <span class="tl-todo">ahead</span>.</p>
 </section>

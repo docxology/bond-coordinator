@@ -12,13 +12,17 @@ exemplar's mathematical core could.
 ## Modules
 
 - `types.py` — `Asset`, `AssetKind`, `Gadget`, `GadgetRegistry`, `PackageStatus`,
-  `MissionPhase`.  A pure-core mirror of the Layer-1 `bond-api` protocol shapes
-  (swap point documented in `TODO.md`).
+  `MissionPhase`.  A pure-core mirror of the Layer-1 `bond-api` protocol
+  shapes.  `bond-api` is built; the mirror is the layer boundary that keeps
+  `src/` free of sibling imports, not a placeholder (see
+  `docs/architecture.md`).
 - `registry.py` — `PackageRecord`, the 27-film `ROSTER`, `build_roster`,
   `get_package`, `find_by_status`, `subset_roster`, identity constants.
 - `reconcile.py` — `override_codenames`, `harvest_gadgets`, `reconcile_report`:
   pure merge of real films' codenames + gadget tables over the provisional
-  registry (refresh/replace semantics; inputs are immutable).
+  registry (refresh/replace semantics; inputs are immutable).  Also
+  `gadget_purpose`, which derives a gadget's one-line purpose from its payload
+  without ever borrowing a builtin type's docstring.
 - `ledger.py` — `LedgerEntry`, `MissionLedger` (forward-only transitions,
   attributable-identity validation, `validate_transition`, append-only audit
   with deterministic summaries `transition_summary`/`per_agent_summary`/

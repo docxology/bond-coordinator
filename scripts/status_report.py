@@ -126,7 +126,7 @@ def main(argv: list[str] | None = None) -> int:
         f"  stale    : {len(status.stale_packages)}  blocked: {len(status.blocked_packages)}"
     )
     print(
-        f"  layer-1  : {'bond-api available' if status.dependency_ready else 'bond-api NOT built (pure-core mirror in use)'}"
+        f"  layer-1  : {'bond-api importable' if status.dependency_ready else 'bond-api not importable here (pure-core mirror in use)'}"
     )
     return 0
 

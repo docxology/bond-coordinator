@@ -47,7 +47,18 @@ uv run ruff check src/bond_coordinator scripts
 uv run mypy src/bond_coordinator scripts
 ```
 
-A dependency on the not-yet-built Layer-1 package (`bond-api`) is detected at
-runtime by a thin `import` probe in `scripts/`, reported in the status and
-situation-room output, and — until it is available — the suite runs on the
-pure-core protocol mirror described in `docs/architecture.md`.
+The availability of the Layer-1 package (`bond-api`) is detected at runtime by
+a `importlib.util.find_spec` probe in `scripts/` and reported in the status and
+situation-room output.  The probe measures *importability in this
+environment*, not whether the package exists, and the rendered wording says so:
+a false result reads "not importable in this environment (pure-core mirror in
+use)".  The pure core never depends on the result — it works from its own
+protocol mirror either way (`docs/architecture.md`).
+
+Reconciliation against the live fleet is likewise reproducible in the sense
+that matters for a fleet of independently developed packages: it is
+*order-independent and partial-failure-tolerant*.  Each film is imported under
+its own guard, so a film that raises at import is skipped with its exception
+type and message on stderr while every other film still reconciles, and the
+harvest merge is idempotent (re-registering a `(film, gadget)` pair replaces
+it, so repeated runs converge on the same table).

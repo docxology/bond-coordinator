@@ -26,7 +26,10 @@ for humans but may lag the code; the test is the source of truth.
 
 `REGISTRY_TOTAL`, `REGISTRY_READY/BUILDING/SCAFFOLDED/RED`,
 `REGISTRY_COVERAGE_KNOWN/UNKNOWN/MEAN/AT_90`, `REGISTRY_BLOCKED_COUNT`,
-`REGISTRY_STALE_COUNT`, `REGISTRY_PACKAGES_CSV` — all computed from
+`REGISTRY_STALE_COUNT`, `REGISTRY_PACKAGES_CSV`,
+`REGISTRY_INFRA_PACKAGE_COUNT`, `REGISTRY_FIRST_SLUG/FIRST_YEAR`,
+`REGISTRY_LAST_SLUG/LAST_YEAR`, `LEDGER_TRANSITION_TOTAL`,
+`LEDGER_PHASE_COUNT` — all computed from
 `src/bond_coordinator/registry.py` + `status.py`, so they can never drift from
 the code.
 
@@ -45,3 +48,10 @@ the code.
 - Every H1 carries a `{#sec:<name>}` label (section registry in
   `manuscript/SYNTAX.md`).
 - No figures or equations exist for this package.
+
+## Gate-threshold tokens
+
+`GATE_COVERAGE_FLOOR` and `GATE_STALE_DAYS` are read from the constants that
+*enforce* them (`status.py::COVERAGE_FLOOR`, `status.py::DEFAULT_STALE_DAYS`),
+not restated.  Prose that mentions a threshold must use the token, so changing
+the gate updates the manuscript rather than leaving a stale figure behind.

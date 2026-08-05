@@ -1,10 +1,10 @@
 ---
 name: bond-coordinator
-description: Mission control (Layer 2) for the BOND fleet — registry, ledger, status, situation room. Load when working inside this package.
+description: Mission control (Layer 2) for the BOND fleet — registry, reconciliation, mission-state ledger, suite status, situation room. Load when working inside this package.
 version: 0.1.0
 author: docxology
 license: MIT
-tags: [bond, mission-control, registry, ledger, situation-room]
+tags: [bond, mission-control, registry, reconcile, ledger, situation-room]
 ---
 
 # bond-coordinator

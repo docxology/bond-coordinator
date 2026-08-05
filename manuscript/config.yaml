@@ -24,8 +24,11 @@ keywords:
   - "mission control"
   - "film-package registry"
   - "mission-state ledger"
+  - "append-only audit trail"
+  - "registry reconciliation"
   - "suite status"
   - "software fleet"
+  - "fault isolation"
   - "reproducible research"
 
 metadata:

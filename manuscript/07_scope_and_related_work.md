@@ -7,7 +7,7 @@ Its scope is exactly the pure core under `src/bond_coordinator/` — `types.py`,
 `registry.py`, `reconcile.py`, `ledger.py`, `status.py`, `situation.py`, and
 `manuscript_variables.py` — and their thin `scripts/` orchestrators.  It
 implements **no film algorithms** and makes **no cross-film computation**: those
-belong to the 27 film packages.  It does not orchestrate missions across
+belong to the {{REGISTRY_TOTAL}} film packages.  It does not orchestrate missions across
 packages (that is Layer 3, `bond-orchestrator`) and does not expose a front
 door (that is Layer 4, `bond-cli`).
 
@@ -20,7 +20,7 @@ exemplar's mathematical core could.
 
 ## Related work
 
-The package inherits the research-exemplar's standards — ≥90% zero-mock
+The package inherits the research-exemplar's standards — ≥{{GATE_COVERAGE_FLOOR}} zero-mock
 coverage, pure tested cores, thin orchestrators, injected manuscript variables
 [@hunt1999pragmatic; @gamma1995designpatterns] — and applies the design-pattern
 vocabulary of software architecture [@bass2012softwarearchitecture] and
@@ -45,9 +45,13 @@ status snapshot and situation room:
 | **Layer 2 (mission control)** | **`bond-coordinator` (this package)** | registry, ledger, status, situation room |
 | Layer 3 (the DAG runner) | `bond-orchestrator` | readiness tri-state |
 | Layer 4 (front door / fleet ops) | `bond-cli`, `bond-ops` | readiness tri-state |
-| Films | 27 film packages | tracked count, READY count, mean coverage |
+| Films | {{REGISTRY_TOTAL}} film packages | tracked count, READY count, mean coverage |
 
-Because Layers 0–1 are not yet built, this package carries a pure-core mirror
-of the protocol shapes (`src/bond_coordinator/types.py`) with a documented
-swap point; the swap is mechanical and does not change the public API (see
-`TODO.md`).
+Layer 1 (`bond-api`) **is built**, and `scripts/reconcile.py` consumes its
+`MissionProvider` discovery directly.  The pure-core mirror of the protocol
+shapes (`src/bond_coordinator/types.py`) nevertheless stays: it is an
+architectural boundary that keeps `src/` free of sibling imports, not a
+placeholder waiting for the real package.  Layer 0 (`bond-utilities`) is not
+yet built; until it is, ledger provenance uses local stdlib JSON codecs, and
+routing it through that package's shared conventions is the one open
+integration item (see `TODO.md`).

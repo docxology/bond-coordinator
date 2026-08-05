@@ -27,7 +27,8 @@ strict analysis-to-manuscript contract, documented in `docs/architecture.md`.
 The enforced gates for this package are:
 
 1. **Coverage**: `uv run pytest tests/ --cov=src --cov-fail-under=90` —
-   line + branch coverage on `src/` at or above 90%.
+   line + branch coverage on `src/` at or above {{GATE_COVERAGE_FLOOR}}, the
+   same floor `status.py::COVERAGE_FLOOR` applies when grading the fleet.
 2. **Zero mocks**: no `unittest.mock` / `MagicMock` / `@patch` anywhere in
    `tests/`; all tests use real data and real computation.
 3. **Types/style**: `ruff check` and `mypy` clean on `src/bond_coordinator`
@@ -37,8 +38,17 @@ The enforced gates for this package are:
 
 ## Test data
 
-Behavioral tests are seeded from a **deterministic 5-film fixture** of
+Behavioral tests are seeded from a **deterministic five-film fixture** of
 representative packages (`dr_no`, `goldfinger`, `goldeneye`, `skyfall`,
 `no_time_to_die`) via `subset_roster`, so the suite exercises every rule
-without depending on all 27 packages being built.  A full-registry test
-independently asserts completeness (27 unique, canon-ordered slugs).
+without depending on all {{REGISTRY_TOTAL}} packages being built.  A
+full-registry test independently asserts completeness ({{REGISTRY_TOTAL}}
+unique, canon-ordered slugs).
+
+Tests that touch the live fleet are written to assert **this package's**
+contract rather than a sibling's internals, because sibling packages are
+developed concurrently and may be mid-edit at any moment.  Where a
+deterministic film is required — for the broken-film isolation control and the
+gadget-purpose regression guard — the test materialises its own minimal film
+package in a temporary directory and points the CLI at it with `--bond-root`.
+This keeps the suite's result a function of this package alone.

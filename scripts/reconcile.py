@@ -31,6 +31,7 @@ sys.path.insert(0, str(REPO / "bond-coordinator" / "src"))
 
 from bond_coordinator import build_roster
 from bond_coordinator.reconcile import (
+    gadget_purpose,
     harvest_gadgets,
     override_codenames,
     reconcile_report,
@@ -38,18 +39,37 @@ from bond_coordinator.reconcile import (
 from bond_coordinator.types import GadgetRegistry
 
 
-def _discover_briefs(slugs: list[str]) -> tuple[dict[str, dict[str, str]], list[str]]:
+def _discover_briefs(
+    slugs: list[str], root: Path = REPO
+) -> tuple[dict[str, dict[str, str]], list[str]]:
     """Return (slug -> {codename, objectives}, skipped) from each MissionBrief.
 
     Un-loadable films (missing deps, broken providers) are SKIPPED, never
     fatal — the probe pattern: a broken film must not crash the suite.
+
+    The guard is deliberately ``Exception``-wide.  Importing a third-party
+    film executes arbitrary module-level code, so it can raise anything
+    (``NameError`` from a missing import, ``AttributeError``, ``TypeError``,
+    ``ValueError`` from a failed constant build).  A narrower guard silently
+    fails to deliver the isolation this function promises: one half-edited
+    sibling would abort reconciliation for all 27.  Every skip is reported on
+    stderr with its cause, so isolation never becomes silence.
     """
-    from bond_api.discovery import load_provider  # type: ignore[import-untyped]
+    try:
+        from bond_api.discovery import load_provider  # type: ignore[import-untyped]
+    except ImportError as exc:
+        # Layer 1 absent from this environment: degrade to "no film declared a
+        # codename" (every film keeps its provisional one) instead of aborting.
+        print(
+            f"[reconcile] bond-api unavailable ({exc}); no briefs discovered",
+            file=sys.stderr,
+        )
+        return {}, sorted(slugs)
 
     briefs: dict[str, dict[str, str]] = {}
     skipped: list[str] = []
     for slug in slugs:
-        search = REPO / slug / "src"
+        search = root / slug / "src"
         if not (search / slug / "mission.py").is_file():
             skipped.append(slug)
             continue  # not built yet: keep provisional codename
@@ -60,20 +80,30 @@ def _discover_briefs(slugs: list[str]) -> tuple[dict[str, dict[str, str]], list[
                 "codename": brief.codename,
                 "objectives": " | ".join(brief.objectives),
             }
-        except (ImportError, RuntimeError) as exc:
-            print(f"[reconcile] skipping {slug}: {exc}", file=sys.stderr)
+        except Exception as exc:  # noqa: BLE001 — per-film isolation, see docstring
+            print(
+                f"[reconcile] skipping {slug}: {type(exc).__name__}: {exc}",
+                file=sys.stderr,
+            )
             skipped.append(slug)
     return briefs, skipped
 
 
-def _discover_gadgets(slugs: list[str]) -> tuple[dict[str, dict[str, str]], list[str]]:
-    """Return (slug -> {gadget_name: purpose}, skipped) from each film's GADGETS."""
+def _discover_gadgets(
+    slugs: list[str], root: Path = REPO
+) -> tuple[dict[str, dict[str, str]], list[str]]:
+    """Return (slug -> {gadget_name: purpose}, skipped) from each film's GADGETS.
+
+    Same per-film isolation contract as :func:`_discover_briefs`: importing a
+    film runs its module-level code, so any exception is caught, reported on
+    stderr, and recorded as a skip rather than aborting the fleet-wide run.
+    """
     import importlib
 
     film_gadgets: dict[str, dict[str, str]] = {}
     skipped: list[str] = []
     for slug in slugs:
-        search = REPO / slug / "src"
+        search = root / slug / "src"
         if not (search / slug / "mission.py").is_file():
             skipped.append(slug)
             continue
@@ -82,6 +112,8 @@ def _discover_gadgets(slugs: list[str]) -> tuple[dict[str, dict[str, str]], list
             module = importlib.import_module(f"{slug}.mission")
             registry = getattr(module, "GADGETS", None)
             if registry is None:
+                # A film with no GADGETS declaration is a legitimate state,
+                # not a failure: it contributes nothing and is not "skipped".
                 continue
             if callable(registry) and not hasattr(registry, "items"):
                 registry = registry()  # a callable factory returning the registry
@@ -93,15 +125,24 @@ def _discover_gadgets(slugs: list[str]) -> tuple[dict[str, dict[str, str]], list
             elif isinstance(registry, dict):
                 pairs = ((name, payload) for name, payload in registry.items())
             else:
-                continue  # unknown shape: nothing to harvest
+                # Unknown container shape — report it rather than dropping the
+                # film silently, so an unharvestable registry is visible.
+                print(
+                    f"[reconcile] {slug}: unrecognised GADGETS shape "
+                    f"({type(registry).__name__}); nothing harvested",
+                    file=sys.stderr,
+                )
+                skipped.append(slug)
+                continue
             for name, payload in pairs:
-                purpose = ""
-                doc = getattr(payload, "__doc__", None)
-                if doc:
-                    purpose = doc.strip().splitlines()[0]
-                film_gadgets.setdefault(slug, {})[name] = purpose
-        except (ImportError, RuntimeError) as exc:
-            print(f"[reconcile] skipping gadgets for {slug}: {exc}", file=sys.stderr)
+                # Purpose derivation is pure business logic and lives in src/:
+                # reading payload.__doc__ here would harvest builtin docstrings.
+                film_gadgets.setdefault(slug, {})[name] = gadget_purpose(payload)
+        except Exception as exc:  # noqa: BLE001 — per-film isolation, see docstring
+            print(
+                f"[reconcile] skipping gadgets for {slug}: {type(exc).__name__}: {exc}",
+                file=sys.stderr,
+            )
             skipped.append(slug)
         finally:
             try:
@@ -124,11 +165,18 @@ def main() -> int:
     parser.add_argument(
         "--gadgets", default=None, help="write flat gadgets.json for the situation room"
     )
+    parser.add_argument(
+        "--bond-root",
+        type=Path,
+        default=REPO,
+        help="directory holding the film packages (default: the BOND suite root); "
+        "overridable so the per-film isolation contract is testable",
+    )
     args = parser.parse_args()
 
     slugs = args.slugs or [record.slug for record in build_roster()]
-    briefs, skipped = _discover_briefs(slugs)
-    film_gadgets, skipped_g = _discover_gadgets(slugs)
+    briefs, skipped = _discover_briefs(slugs, root=args.bond_root)
+    film_gadgets, skipped_g = _discover_gadgets(slugs, root=args.bond_root)
     skipped_all = sorted(set(skipped + skipped_g))
 
     roster = build_roster()

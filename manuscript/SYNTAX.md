@@ -56,16 +56,30 @@ track the code.
 | `REGISTRY_READY` / `REGISTRY_BUILDING` / `REGISTRY_SCAFFOLDED` / `REGISTRY_RED` | Counts by status |
 | `REGISTRY_COVERAGE_KNOWN` / `REGISTRY_COVERAGE_UNKNOWN` | Measured / unmeasured count |
 | `REGISTRY_COVERAGE_MEAN` | Mean measured coverage (or "N/A") |
-| `REGISTRY_COVERAGE_AT_90` | Count at/above the 90% gate |
+| `REGISTRY_COVERAGE_AT_90` | Count at/above the coverage gate |
 | `REGISTRY_BLOCKED_COUNT` / `REGISTRY_STALE_COUNT` | Blocked / stale count |
 | `REGISTRY_PACKAGES_CSV` | Comma-joined slug list |
 | `REGISTRY_LAYER_COUNT` | Number of declared suite-topology layers |
 | `REGISTRY_LAYER_CSV` | Comma-joined `layer (label)` list |
+| `REGISTRY_INFRA_PACKAGE_COUNT` | Mission-infrastructure packages (every layer except `films`) |
+| `REGISTRY_FIRST_SLUG` / `REGISTRY_FIRST_YEAR` | First roster row's slug and release year |
+| `REGISTRY_LAST_SLUG` / `REGISTRY_LAST_YEAR` | Last roster row's slug and release year |
 | `LEDGER_TRANSITION_TOTAL` | Total audit-trail entries (fresh: one per registered package) |
+| `LEDGER_PHASE_COUNT` | Number of lifecycle phases in `MissionPhase` |
+| `GATE_COVERAGE_FLOOR` | Enforced coverage floor, read from `status.py::COVERAGE_FLOOR` |
+| `GATE_STALE_DAYS` | Default staleness threshold, read from `status.py::DEFAULT_STALE_DAYS` |
 
 The authoritative source of truth is the return value of
 `generate_variables()`; `tests/test_manuscript_variables.py` cross-checks the
-real `manuscript/config.yaml`.
+real `manuscript/config.yaml`, and
+`TestManuscriptCrossReference::test_every_prose_token_is_generated` is a live
+gate asserting every `{{TOKEN}}` used in a numbered section is actually
+produced.
+
+Two token families exist so that prose never restates a number the code owns:
+the `REGISTRY_*` / `LEDGER_*` tokens are derived from the registry and ledger,
+and the `GATE_*` tokens are read from the constants that *enforce* the
+thresholds — change `COVERAGE_FLOOR` and the manuscript follows.
 
 ## Section Numbering
 

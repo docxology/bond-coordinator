@@ -34,12 +34,29 @@ After changing, re-run the gate with `--cov-report=term-missing` and fix gaps â€
 (`MissionLedger` JSON methods are pure codecs; only `scripts/` calls them on
 real files).
 
-**`scripts/*.py`** orchestrates: argv parsing, file I/O, the `bond_api`
-availability probe, and calls into `src/`.
+**`scripts/*.py`** orchestrates: argv parsing, file I/O, `bond_api` provider
+discovery + availability probing, and calls into `src/`.
 
 **Boundary test**: if a line in `scripts/` decides a transition rule, computes a
-status count, or generates HTML, it violates the boundary.  That logic belongs
-in `src/` and must be tested.
+status count, generates HTML, or *interprets* a value (e.g. deriving a gadget's
+purpose from its payload), it violates the boundary.  That logic belongs in
+`src/` and must be tested.  `reconcile.gadget_purpose` was moved into `src/`
+for exactly this reason after the inline version harvested builtin docstrings.
+
+## Rule 3b: Cross-Package Reads Must Degrade, Never Abort
+
+`scripts/reconcile.py` imports 27 independently developed sibling packages.
+Any of them may be mid-edit and raise **any** exception at import time.
+
+- Guard per film with `except Exception`, print the slug plus the exception
+  **type and message** to stderr, and record the slug as skipped.
+- Never narrow that guard to a specific exception tuple â€” a `NameError` from a
+  half-saved sibling must not take down a fleet-wide run.
+- Never make it silent: an unharvestable film is reported, not dropped.
+- Never write a test that asserts a *sibling's* internals (a specific codename
+  or gadget name). Assert this package's contract against whatever the fleet's
+  state is; use `--bond-root` with a purpose-built fixture film when you need
+  a deterministic film to test against.
 
 ## Rule 4: "Show, Not Tell" Documentation
 

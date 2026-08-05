@@ -19,8 +19,8 @@ import yaml
 
 from .ledger import MissionLedger
 from .registry import ROSTER, SUITE_NAME, PackageRecord
-from .status import SUITE_LAYERS, build_status
-from .types import PackageStatus
+from .status import COVERAGE_FLOOR, DEFAULT_STALE_DAYS, SUITE_LAYERS, build_status
+from .types import MissionPhase, PackageStatus
 
 #: Lifecycle shown in prose; kept in sync with :class:`MissionPhase`.
 MISSION_LIFECYCLE = "brief → recon → plan → execute → debrief"
@@ -82,6 +82,19 @@ def generate_variables(
     )
     layer_csv = ", ".join(f"{layer} ({label})" for layer, label, _ in SUITE_LAYERS)
 
+    # Mission-infrastructure packages = every declared layer except the films
+    # layer, whose members are the registry rows counted by REGISTRY_TOTAL.
+    infra_package_count = sum(
+        len(packages) for layer, _, packages in SUITE_LAYERS if layer != "films"
+    )
+
+    # Roster span — derived from the registry so prose never restates a year.
+    # ``roster`` is non-empty for every caller (the default is the 27-film
+    # ROSTER and ``subset_roster`` rejects an unknown slug), but an explicitly
+    # empty roster must degrade to "—" rather than raise from the manuscript.
+    first = roster[0] if roster else None
+    last = roster[-1] if roster else None
+
     return {
         # Identity — from manuscript/config.yaml, never hand-authored in prose.
         "CONFIG_TITLE": _paper_token(config, "title"),
@@ -104,10 +117,22 @@ def generate_variables(
         "REGISTRY_BLOCKED_COUNT": str(len(status.blocked_packages)),
         "REGISTRY_STALE_COUNT": str(len(status.stale_packages)),
         "REGISTRY_PACKAGES_CSV": ", ".join(record.slug for record in roster),
+        # Roster span — derived from the first/last registry rows, so the
+        # manuscript never hand-authors a film slug or release year.
+        "REGISTRY_FIRST_SLUG": first.slug if first else "—",
+        "REGISTRY_FIRST_YEAR": str(first.year) if first else "—",
+        "REGISTRY_LAST_SLUG": last.slug if last else "—",
+        "REGISTRY_LAST_YEAR": str(last.year) if last else "—",
         # Suite topology + audit trail — derived, never hand-authored.
         "REGISTRY_LAYER_COUNT": str(len(SUITE_LAYERS)),
         "REGISTRY_LAYER_CSV": layer_csv,
+        "REGISTRY_INFRA_PACKAGE_COUNT": str(infra_package_count),
         "LEDGER_TRANSITION_TOTAL": str(len(ledger.history)),
+        "LEDGER_PHASE_COUNT": str(len(MissionPhase)),
+        # Enforced thresholds — read from the modules that enforce them, so a
+        # gate change can never leave a stale number behind in prose.
+        "GATE_COVERAGE_FLOOR": f"{COVERAGE_FLOOR:.0f}%",
+        "GATE_STALE_DAYS": str(DEFAULT_STALE_DAYS),
     }
 
 

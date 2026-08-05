@@ -9,7 +9,8 @@ hard constraint, not a suggestion; the read-first entry point is
 - `src/bond_coordinator/` — pure core (stdlib + pyyaml).  No
   `infrastructure.*`, no sibling BOND imports, no filesystem side-effects.
 - `scripts/` — thin orchestrators; the only place that parses argv, touches
-  files, and probes for the future `bond-api`.
+  files, and imports `bond-api` (to discover film `MissionProvider`s and to
+  probe its availability).
 - `tests/` — zero-mock, deterministic, ≥90% coverage on `src/`.
 
 ## Reading order

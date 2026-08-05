@@ -93,9 +93,20 @@ class TestBlockedAndStaleRendering:
         assert roster[0].slug in html
 
     def test_dependency_not_ready_note(self, sample_roster) -> None:
+        """A failed probe reports non-importability, not non-existence."""
         status = build_status(sample_roster, now=FIXED_NOW, dependency_ready=False)
         html = build_situation_room(status, sample_roster)
-        assert "not yet built" in html
+        assert "not importable in this environment" in html
+        assert "pure-core mirror in use" in html
+        # The probe measures this interpreter's environment; it must never be
+        # rendered as a claim that the sibling package has not been built.
+        assert "not yet built" not in html
+
+    def test_dependency_ready_note(self, sample_roster) -> None:
+        status = build_status(sample_roster, now=FIXED_NOW, dependency_ready=True)
+        html = build_situation_room(status, sample_roster)
+        assert "importable (protocol available)" in html
+        assert "pure-core mirror in use" not in html
 
 
 class TestDeterminismAndPersistence:
@@ -204,9 +215,38 @@ class TestLayersRendering:
         html = build_situation_room(status, sample_roster)
         assert "Suite layers" in html
         # films layer shows ready_count/total (no films are READY here).
-        assert "0/5 ready" in html
-        # layer1 inferred from dependency_ready=True -> "yes".
-        assert ">yes<" in html or "yes" in html
+        assert f"0/{len(sample_roster)} ready" in html
+        # Assert the rendered *cell*, not a bare substring: "yes"/"no" occur
+        # in ordinary prose, so a substring check here would pass vacuously.
+        assert "<td>yes</td>" in html  # layer0 injected True, layer1 inferred True
+        assert "<td>no</td>" in html  # layer4 injected False
+
+    def test_empty_layers_omits_the_section(self, sample_roster) -> None:
+        """A snapshot carrying no layers renders no layers section at all."""
+        from dataclasses import replace as dc_replace
+
+        status = dc_replace(build_status(sample_roster, now=FIXED_NOW), layers=())
+        html = build_situation_room(status, sample_roster)
+        assert "Suite layers" not in html
+        # The rest of the document still renders.
+        assert "Film packages" in html
+        assert "Recent transitions" in html
+
+
+class TestStaleThresholdRendering:
+    def test_default_threshold_is_reported(self, sample_roster) -> None:
+        from bond_coordinator import DEFAULT_STALE_DAYS
+
+        status = build_status(sample_roster, now=FIXED_NOW)
+        html = build_situation_room(status, sample_roster)
+        assert f"no update in {DEFAULT_STALE_DAYS} days" in html
+
+    def test_custom_threshold_is_reported_not_the_default(self, sample_roster) -> None:
+        """The dashboard states the threshold actually applied."""
+        status = build_status(sample_roster, now=FIXED_NOW, stale_days=7)
+        html = build_situation_room(status, sample_roster)
+        assert "no update in 7 days" in html
+        assert "no update in 30 days" not in html
 
 
 class TestAuditTimeline:

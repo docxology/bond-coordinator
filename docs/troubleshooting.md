@@ -32,9 +32,14 @@ with records `{"name", "film", "purpose"}` and run
 
 ## `importlib.util.find_spec("bond_api")` returns False
 
-Expected: `bond-api` (Layer 1) is not built yet.  The coordinator runs on its
-pure-core protocol mirror and reports `dependency_ready: false`.  No action
-needed.
+This is an **importability** result, not an existence claim: `bond-api` is
+built, but it is not installed in this interpreter's environment.  The
+coordinator reports `dependency_ready: false`, renders "not importable in this
+environment (pure-core mirror in use)", and keeps working — the pure core never
+needed it.  No action is required unless you want live reconciliation:
+`scripts/reconcile.py` needs `bond_api` importable to read films' real
+codenames, and without it every film keeps its provisional codename (reported
+on stderr).
 
 ## Git shows no changes under `output/`
 

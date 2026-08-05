@@ -16,7 +16,7 @@ for agents live in [`docs/agent_instructions.md`](docs/agent_instructions.md) �
 | Surface | Rule |
 | --- | --- |
 | `src/bond_coordinator/` (pure core) | stdlib + `pyyaml` only — **no** `infrastructure.*`, **no** sibling BOND imports, **no** filesystem side-effects. `MissionLedger` JSON persistence is provided as pure methods; only `scripts/` touches disk. |
-| `scripts/` | Thin orchestrators: argv parsing, file I/O, the `bond-api` availability probe. May import `bond_coordinator`. |
+| `scripts/` | Thin orchestrators: argv parsing, file I/O, `bond-api` provider discovery + availability probe. May import `bond_coordinator`. Cross-package reads are guarded per film with `except Exception` and reported on stderr — one broken sibling must never abort a fleet-wide run. |
 | `tests/` | Zero-mock, real-data. Deterministic 5-film fixture in `conftest.py`; full-registry completeness assertions as well. |
 
 Enforced by `docs/architecture.md` and the `manuscript/layer_contract.yaml`.
@@ -47,18 +47,24 @@ Enforced by `docs/architecture.md` and the `manuscript/layer_contract.yaml`.
   red, executing-before-ready, or planning-before-building.
 - **Situation room**: self-contained HTML (no JS, no external assets), all
   values HTML-escaped, deterministic given inputs.
+- **Reconcile**: merges films' real codenames + gadget tables over the
+  provisional registry with refresh/replace semantics; `gadget_purpose` derives
+  a gadget's one-line purpose from its payload without ever borrowing a
+  builtin's docstring.
 - **Manuscript variables**: identity from `manuscript/config.yaml` + registry
-  counts injected as `{{TOKEN}}`s — never hand-authored in prose.
+  counts, roster span, and enforced-gate thresholds injected as `{{TOKEN}}`s —
+  never hand-authored in prose.
 - **Zero-mock, ≥90%** (`--cov-fail-under=90` on `src/`), ruff + mypy clean.
 
 ## Repository layout
 
 ```
 src/bond_coordinator/
-    types.py                Asset, Gadget, GadgetRegistry, PackageStatus, MissionPhase (bond-api mirror)
+    types.py                Asset, AssetKind, Gadget, GadgetRegistry, PackageStatus, MissionPhase (bond-api mirror)
     registry.py             PackageRecord, ROSTER (27), build_roster, get_package, find_by_status, subset_roster
+    reconcile.py            gadget_purpose, override_codenames, harvest_gadgets, reconcile_report
     ledger.py               LedgerEntry, MissionLedger (transitions, validation, audit summaries, staleness, JSON)
-    status.py               CoverageSummary, BlockedPackage, LayerSummary, SUITE_LAYERS, SuiteStatus, build_status
+    status.py               COVERAGE_FLOOR, CoverageSummary, BlockedPackage, LayerSummary, SUITE_LAYERS, SuiteStatus, build_status
     situation.py            build_situation_room, write_situation_room (coverage heat, mission timeline, per-film gadgets, layers, audit tail)
     manuscript_variables.py load_config, generate_variables, resolve_manuscript_tree
     __init__.py             public API
@@ -72,7 +78,7 @@ tests/
     conftest.py             5-film deterministic fixture + fixed clock
     test_registry.py test_ledger.py test_status.py test_situation.py test_reconcile.py
     test_manuscript_variables.py test_scripts_smoke.py
-manuscript/                 config.yaml identity + 8 sections with {{TOKEN}} injection
+manuscript/                 config.yaml identity + 9 numbered sections (00-07, 99_references) with {{TOKEN}} injection
 docs/                       agent-facing rulebook (read-first: agent_instructions.md)
 output/                     gitignored generated artifacts (indicative only)
 ```

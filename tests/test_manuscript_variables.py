@@ -14,6 +14,7 @@ import yaml
 
 from bond_coordinator import (
     MISSION_LIFECYCLE,
+    ROSTER,
     generate_variables,
     load_config,
     resolve_manuscript_tree,
@@ -100,6 +101,55 @@ class TestGenerateVariables:
         roster = subset_roster(SAMPLE_SLUGS)
         variables = generate_variables(config_path, roster=roster)
         assert variables["LEDGER_TRANSITION_TOTAL"] == "5"
+
+    def test_roster_span_tokens_full_fleet(self, config_path: Path) -> None:
+        """First/last roster rows are derived, so prose never types a year."""
+        variables = generate_variables(config_path)
+        assert variables["REGISTRY_FIRST_SLUG"] == ROSTER[0].slug
+        assert variables["REGISTRY_FIRST_YEAR"] == str(ROSTER[0].year)
+        assert variables["REGISTRY_LAST_SLUG"] == ROSTER[-1].slug
+        assert variables["REGISTRY_LAST_YEAR"] == str(ROSTER[-1].year)
+
+    def test_roster_span_tokens_follow_the_roster(self, config_path: Path) -> None:
+        """Change the roster and the span tokens change with it."""
+        roster = subset_roster(("skyfall", "dr_no"))
+        variables = generate_variables(config_path, roster=roster)
+        assert variables["REGISTRY_FIRST_SLUG"] == "skyfall"
+        assert variables["REGISTRY_FIRST_YEAR"] == "2012"
+        assert variables["REGISTRY_LAST_SLUG"] == "dr_no"
+        assert variables["REGISTRY_LAST_YEAR"] == "1962"
+
+    def test_roster_span_tokens_degrade_on_empty_roster(
+        self, config_path: Path
+    ) -> None:
+        variables = generate_variables(config_path, roster=())
+        assert variables["REGISTRY_FIRST_SLUG"] == "—"
+        assert variables["REGISTRY_LAST_YEAR"] == "—"
+        assert variables["REGISTRY_TOTAL"] == "0"
+
+    def test_gate_tokens_track_the_enforcing_modules(self, config_path: Path) -> None:
+        """Threshold tokens are read from the code that enforces them."""
+        from bond_coordinator import COVERAGE_FLOOR, DEFAULT_STALE_DAYS, MissionPhase
+
+        variables = generate_variables(config_path)
+        assert variables["GATE_COVERAGE_FLOOR"] == f"{COVERAGE_FLOOR:.0f}%"
+        assert variables["GATE_STALE_DAYS"] == str(DEFAULT_STALE_DAYS)
+        assert variables["LEDGER_PHASE_COUNT"] == str(len(MissionPhase))
+
+    def test_infra_package_count_excludes_the_films_layer(
+        self, config_path: Path
+    ) -> None:
+        """Infra count is derived from SUITE_LAYERS, not typed into prose."""
+        from bond_coordinator import SUITE_LAYERS
+
+        expected = sum(
+            len(packages) for layer, _, packages in SUITE_LAYERS if layer != "films"
+        )
+        variables = generate_variables(config_path)
+        assert variables["REGISTRY_INFRA_PACKAGE_COUNT"] == str(expected)
+        # It counts packages, not layers, and excludes the 27 films entirely.
+        assert variables["REGISTRY_INFRA_PACKAGE_COUNT"] != variables["REGISTRY_TOTAL"]
+        assert int(variables["REGISTRY_INFRA_PACKAGE_COUNT"]) >= len(SUITE_LAYERS) - 1
 
     def test_require_outputs_flag_accepted(self, config_path: Path) -> None:
         # The coordinator has no analysis-output dependency; the flag is

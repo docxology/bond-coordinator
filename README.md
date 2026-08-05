@@ -16,10 +16,11 @@ whether it is healthy* are machine-checkable facts.
 
 | Capability | Module | Responsibility |
 |---|---|---|
+| **Protocol mirror** | `src/bond_coordinator/types.py` | `Asset`, `AssetKind`, `Gadget`, `GadgetRegistry`, `PackageStatus`, `MissionPhase` — pure-core mirrors of the `bond-api` shapes, so the core keeps zero sibling imports. |
 | **Registry** | `src/bond_coordinator/registry.py` | Authoritative, canon-ordered list of all 27 film packages: slug, film, year, mission codename, status, measured coverage. |
-| **Reconcile** | `src/bond_coordinator/reconcile.py` | Merge real films' codenames + gadget tables over the provisional registry (refresh/replace semantics); `scripts/reconcile.py` drives discovery via `bond-api`. |
+| **Reconcile** | `src/bond_coordinator/reconcile.py` | Merge real films' codenames + gadget tables over the provisional registry (refresh/replace semantics), plus `gadget_purpose` — the payload→one-line-purpose rule that refuses to borrow a builtin's docstring. `scripts/reconcile.py` drives discovery via `bond-api`. |
 | **Mission-state ledger** | `src/bond_coordinator/ledger.py` | Each package's lifecycle (`brief → recon → plan → execute → debrief`) with forward-only transition rules, attributable-identity validation, an append-only audit trail, and deterministic audit summaries (`transition_summary`, `per_agent_summary`, `phase_timeline`). |
-| **Suite status** | `src/bond_coordinator/status.py` | Deterministic aggregate snapshot: counts by state/phase, coverage summary, stale/blocked flags, and **per-layer summaries** of the declared suite topology. |
+| **Suite status** | `src/bond_coordinator/status.py` | Deterministic aggregate snapshot: counts by state/phase, coverage summary, stale/blocked flags (carrying the `stale_days` threshold actually applied), and **per-layer summaries** of the declared suite topology. Owns `COVERAGE_FLOOR`, the gate the dashboard legend reads. |
 | **Situation room** | `src/bond_coordinator/situation.py` | Self-contained HTML dashboard: per-package table with **mission-timeline bars** and **coverage heat**, suite-layers table, **per-film gadget groups**, and a recent-transitions audit tail. |
 | **Manuscript variables** | `src/bond_coordinator/manuscript_variables.py` | Injects identity (from `manuscript/config.yaml`) and registry-derived counts as `{{TOKEN}}`s — never hand-authored in prose. |
 
@@ -67,21 +68,41 @@ uv run python scripts/z_generate_manuscript_variables.py
 All generated artifacts live under `output/` and are **gitignored and
 disposable** — always regenerated from source, never hand-edited.
 
+## The MissionProvider surface
+
+This package **implements no `MissionProvider` and ships no `mission.py`** —
+by design.  `bond_api.protocol.MissionProvider` (`film`, `brief`, `recon`,
+`plan`, `execute`, `debrief`) is the contract every *film* package satisfies;
+mission control is its **consumer**, not one of its implementers.  A synthetic
+provider here would inject a non-film into the fleet's discovery surface and
+make the registry a member of the roster it governs.
+
+Consumption is confined to one thin orchestrator, `scripts/reconcile.py`,
+which calls `bond_api.discovery.load_provider(slug, …)`, reads
+`provider.brief()` for each film's real codename, and reads each film's
+module-level `GADGETS`.  It converts everything to plain dicts before calling
+the pure functions in `src/bond_coordinator/reconcile.py`, so no `bond_api`
+type ever crosses into the core.  Films that are absent, unimportable, or
+raise on import are skipped individually and reported on stderr — one broken
+sibling never aborts a fleet-wide run.  Full contract and degradation table:
+[`docs/architecture.md`](docs/architecture.md).
+
 ## Identity
 
 - Package: `bond-coordinator` (Layer 2)
 - Codename: `MISSION CONTROL`
-- Depends on: `bond-api` (Layer 1, built — drives `scripts/reconcile.py`
-  discovery) and `bond-utilities` (Layer 0, not yet built); the pure core
-  ships its own protocol mirror (`src/bond_coordinator/types.py`) with a
-  documented swap point (see `TODO.md`).
+- Depends on: `bond-api` (Layer 1, **built** — drives `scripts/reconcile.py`
+  discovery) and `bond-utilities` (Layer 0, not yet built, for provenance I/O).
+  The pure core deliberately imports neither: it ships its own protocol mirror
+  (`src/bond_coordinator/types.py`) to keep `src/` sibling-free (see `TODO.md`).
 
 ## Repository layout
 
 ```
-src/bond_coordinator/   pure core (types, registry, ledger, status, situation, manuscript_variables)
-scripts/                thin orchestrators (status_report, advance_mission, build_situation_room,
-                        z_generate_manuscript_variables)
+src/bond_coordinator/   pure core (types, registry, reconcile, ledger, status, situation,
+                        manuscript_variables)
+scripts/                thin orchestrators (status_report, reconcile, advance_mission,
+                        build_situation_room, z_generate_manuscript_variables)
 tests/                  zero-mock real-data suite; deterministic 5-film fixture (tests/conftest.py)
 manuscript/             config.yaml identity + sections with {{TOKEN}} injection
 docs/                   agent-facing operational rulebook
