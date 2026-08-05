@@ -1,83 +1,303 @@
-# bond-coordinator TODO
+# TODO — bond-coordinator (MISSION CONTROL)
 
-Forward-only backlog for **bond-coordinator** — mission control (Layer 2) of
-the BOND suite.  Local-only working tree; no remote.
+`bond-coordinator` is Layer 2 of PROJECT BOND: the registry and situation room
+for the 33-package fleet (27 film packages + 6 mission-infrastructure
+packages).  It implements no film algorithms — it records what exists
+(`registry.py`), where each package is in its mission (`ledger.py`), whether
+the fleet is healthy (`status.py`, `gates.py`), and renders the whole thing as
+one self-contained HTML dashboard (`situation.py`).  The `src/` core is pure
+(stdlib + `pyyaml`, no sibling imports); `scripts/` holds the thin
+orchestrators that bind it to disk and to `bond-api` discovery.
 
-## Status
+**Verified state, measured 2026-08-05 at commit `a7300c7`** (Python 3.14.6,
+pytest 9.0.2): **221 tests passing, 0 skipped, 100.00% line + branch coverage
+on `src/`** (604 statements, 172 branches, 0 missed) against the enforced
+`--cov-fail-under=90` floor.  `ruff check`, `ruff format --check`, and `mypy`
+are clean across `src scripts tests` (30 files formatted, 14 typed).
 
-Phase 5 (documentation truth + defect sweep) is green.  The gates are the
-source of truth for any number, so this file names the gate rather than
-quoting a figure that would go stale:
-
-```bash
-uv run pytest tests/ --cov=src --cov-fail-under=90   # line + branch on src/
-uv run ruff check src/ scripts/ && uv run ruff format --check src/ scripts/
-uv run mypy src/
-```
-
-Zero mocks, zero skips, deterministic.  Reconcile semantics (refresh/replace)
-and every public API are unchanged — `bond-cli`, `bond-orchestrator`, and the
-film fleet consume them.
+Every item below is open as of that commit.  Completed work is deleted, not
+archived: the five findings from the adversarial audit
+(`../output/verify/bond-coordinator.json` — the hollow reconcile-CLI gate, the
+"bond-utilities is not yet built" claim in four files, the "every package is
+scaffolded" claim in three files, reconciled codenames never reaching the
+dashboard, and the self-asserting registry test) were all resolved in `a7300c7`
+and are gone from this list.  I re-checked each one by grep against the current
+tree before deleting it.
 
 ## Open work
 
-1. **Route ledger provenance through `bond-utilities` `mission_io`.**
-   `MissionLedger.to_json`/`from_json` and `scripts/advance_mission.py`
-   persistence are local stdlib equivalents of the Layer-0 conventions.
-   `bond-utilities` **is built** (`src/bond_utilities/mission_io.py` provides
-   `record_provenance_outcome`, `save_record`/`load_record`, `verify_provenance`);
-   this package simply has not adopted it.  The pure-core JSON codecs stay
-   regardless — only the *script* changes.
-2. **Feed per-layer infra readiness from a real fleet probe.**
-   `build_status(layer_ready=...)` accepts injected readiness and `layer1`
-   is inferred from the `bond_api` importability probe, but `layer0`,
-   `layer2`, `layer3`, and `layer4` report `None` ("not probed") unless a
-   caller supplies them.  A real probe belongs in `bond-ops`, which runs the
-   per-package gates; the coordinator should consume its output rather than
-   re-implement gate running.
-3. **Consume the fleet gate aggregate from a fleet probe, not a file path.**
-   *Done in part:* `src/bond_coordinator/gates.py` (`parse_gate_manifest`,
-   `apply_gate_results`) turns `bond-ops` gate rows into measured
-   `status`/`coverage` on the roster, and `status_report.py`,
-   `build_situation_room.py`, and `z_generate_manuscript_variables.py` all
-   apply it (`--gate-manifest`, default
-   `../output/aggregate/gate_manifest.json`; `--no-gate-manifest` for a
-   fleet-independent seed run).  The shipped `ROSTER` literal stays
-   `scaffolded`/`coverage=None` on purpose — a literal is not a measurement —
-   and every renderer states which of the two it is showing.  What remains:
-   the manifest path is a convention, not a contract; when `bond-ops` exposes
-   a probe API, consume that instead of a hard-coded relative path.
-4. **Reconsider the `_transition` defensive branch.**
-   `ledger.py::MissionLedger._transition` carries a `# pragma: no cover`
-   guard for an invalid `jump` value that no public method can produce
-   (`advance` passes 0, `touch` passes -1, `jump` passes a target).  It is
-   honestly marked rather than hidden, but it is unreachable code; either
-   restructure the three callers to a small enum-typed intent so the branch
-   disappears, or leave it and keep the pragma justified.
+Seven items.  Five carry over from
+`../output/verify/bond-coordinator.unresolved.json` (the audit findings the
+remediation pass could **not** close); one (`LEDGER-BRANCH-1`) predates it; one
+(`DOC-XREF-1`) was noticed while writing this file.
 
-## Known constraints (not bugs)
+### Correctness
 
-- **No `mission.py`, no `MissionProvider`.** This is Layer 2 — the consumer of
-  film providers, not one of them. Adding a synthetic provider would put a
-  non-film into the fleet's discovery surface. See `docs/architecture.md`,
-  "Consuming the bond-api MissionProvider".
+#### `GATE-PATH-1` — the fleet gate-manifest location is a convention, not a contract
+
+**Wrong:** all three renderers hard-code the relative path
+`../output/aggregate/gate_manifest.json` as the boundary at which the registry
+stops being an unmeasured seed and becomes measured fact:
+
+- `scripts/status_report.py:39` (`FLEET_GATE_MANIFEST`)
+- `scripts/build_situation_room.py:48`
+- `scripts/z_generate_manuscript_variables.py:40`
+
+Nothing binds `bond-ops` to keep writing that path.  On the other side,
+`../bond-ops/src/bond_ops/gates.py:424` `write_manifest(report, path)` takes the
+destination from *its* caller and exports no constant, so the agreed location
+exists only as two matching string literals in two repositories.  If `bond-ops` renames or
+relocates its aggregate, every consumer here silently falls back to the
+`scaffolded` / `coverage=None` seed.  The fallback is *announced* — stderr
+carries `no gate manifest at …` and each renderer's provenance line says
+`none applied` (asserted by
+`tests/test_scripts_smoke.py:108` `test_absent_gate_manifest_is_reported_not_silent`)
+— so this is a degradation, not a silent lie.  But it degrades to a
+never-failing state: a fleet where nothing is measured looks exactly like a
+fleet whose sibling moved a file.  No test can catch the difference, and
+writing one that reads `bond-ops` internals is forbidden by this package's
+layer doctrine (see *Known limitations*).
+
+**Done looks like:** `bond-ops` exposes the aggregate through an importable
+probe or a published path constant, and `scripts/*` consume that instead of a
+literal relative path; renaming the artifact then breaks a `bond-ops` test
+rather than quietly emptying this package's measurements.
+
+**Demonstrate:**
+
+```bash
+# from bond-ops: the location is exported, not implied
+uv run python -c "from bond_ops.gates import AGGREGATE_MANIFEST_PATH; print(AGGREGATE_MANIFEST_PATH)"
+# from here: no literal aggregate path left in the orchestrators
+! grep -rn 'output" / "aggregate"' scripts/
+```
+
+### Verification
+
+#### `SCRIPTS-COV-1` — `scripts/` is outside the measured coverage scope
+
+**Missing:** `pyproject.toml:47-56` sets `source = ["src"]`, so the 100.00%
+figure describes the pure core only.  The five orchestrators —
+`scripts/status_report.py`, `scripts/build_situation_room.py`,
+`scripts/reconcile.py`, `scripts/advance_mission.py`,
+`scripts/z_generate_manuscript_variables.py` — are exercised only by the 15
+subprocess smoke tests in `tests/test_scripts_smoke.py`, which assert exit
+codes and output substrings.  Their branch coverage is unknown and unenforced.
+That includes the gate-application and provenance-source wiring
+(`build_situation_room.py:69-102`), which is precisely the code that decides
+whether a dashboard row is measured.
+
+This is pre-existing scope, not a regression from the audit pass — but it means
+"100% coverage" and "this package is fully covered" are different statements,
+and only the first is true.
+
+**Done looks like:** either `source = ["src", "scripts"]` with a stated floor
+the orchestrators actually meet, or an explicit written decision in
+`docs/testing_philosophy.md` that the scripts layer is smoke-tested by design
+with the coverage figure scoped accordingly in `README.md`/`AGENTS.md`.  Either
+resolution is acceptable; the current state — unmeasured and unstated — is not.
+
+**Demonstrate:**
+
+```bash
+uv run pytest tests/ --cov=src --cov=scripts --cov-report=term-missing
+```
+
+#### `PROVENANCE-TEST-1` — the provenance-defaults guard is a wording check
+
+**Weak:** `tests/test_scripts_smoke.py:157`
+(`test_unreconciled_unmeasured_build_says_so`) closes the "a seed run must not
+look reconciled or measured" claim by asserting two substrings —
+`"registry seed — provisional codenames"` and `"status/coverage unmeasured"` —
+against the constants at `src/bond_coordinator/situation.py:29-34`
+(`DEFAULT_CODENAME_SOURCE`, `DEFAULT_MEASUREMENT_SOURCE`).  It fails on a benign
+rewording of a string literal, and it passes on any regression that still emits
+those words.  The behavioural siblings around it
+(`test_reconciled_codenames_reach_the_dashboard:174`,
+`test_measured_coverage_reaches_the_dashboard:208`) are strictly stronger:
+they assert film-declared codenames and measured coverage values reach the
+rendered HTML.
+
+**Done looks like:** the negative case is bound the same behavioural way as the
+positive ones — a seed-run dashboard is asserted to contain **zero** occurrences
+of any film-declared codename and **zero** numeric coverage cells, rather than
+being asserted to contain a particular sentence.
+
+**Demonstrate:**
+
+```bash
+# The test must fail when the guarantee breaks, not when the wording changes.
+uv run pytest tests/test_scripts_smoke.py::TestBuildSituationRoom -v
+# Negative control: reword the two constants in situation.py (keeping behaviour
+# identical) — the reworked test must still pass; today's test does not.
+```
+
+#### `LEDGER-BRANCH-1` — the `_transition` defensive branch is unreachable and unbound
+
+**Weak:** `src/bond_coordinator/ledger.py:293` carries
+`else:  # pragma: no cover — defensive; jump is only 0/-1 from the public API`.
+The invariant it names is real but is enforced only by reading the three call
+sites — `advance` passes `0` (`ledger.py:252`), `jump` passes a target
+(`ledger.py:263`), `touch` passes `-1` (`ledger.py:271`).  Nothing fails if a
+fourth caller is added with an out-of-range `jump`.  The pragma is honest
+(marked, not hidden) — but an excluded line is an unverified line.
+
+**Done looks like:** the three callers pass a small typed intent (enum or
+literal union) so the invalid case is a type error and the branch disappears,
+*or* the branch is kept and reached by a test that constructs the invalid
+intent directly, removing the pragma.
+
+**Demonstrate:**
+
+```bash
+# Either the pragma is gone…
+! grep -n "pragma: no cover" src/bond_coordinator/ledger.py
+# …and coverage stays at 100% with no excluded lines:
+uv run pytest tests/ --cov=src --cov-report=term-missing --cov-fail-under=100
+```
+
+### Documentation
+
+#### `DOC-XREF-1` — four files cite TODO items by position, which this rewrite already invalidated
+
+**Wrong:** these cross-references point at "`TODO.md` item 1", a positional
+label with no anchor in the file it cites:
+
+- `README.md:110` — "routing them through Layer 0 is open work (`TODO.md` item 1)"
+- `docs/faq.md:61` — "routing it through Layer 0 is open work (see `TODO.md` item 1)"
+- `docs/architecture.md:120` — "`bond-api` is built (see `TODO.md`)"
+- `manuscript/07_scope_and_related_work.md:58` and `manuscript/01_introduction.md:45` — "(see `TODO.md`)"
+
+The first two are now stale: this file has no numbered item 1.  The intended
+target is `LEDGER-IO-1` below.  (Fixing the two manuscript references requires
+editing manuscript prose, which is out of scope for this pass — record only.)
+
+**Done looks like:** `README.md` and `docs/faq.md` cite `TODO.md#ledger-io-1`
+(or the bare ID `LEDGER-IO-1`), and no shipped file refers to a TODO item by
+ordinal position.
+
+**Demonstrate:**
+
+```bash
+! grep -rn "TODO.md. item [0-9]" README.md AGENTS.md docs/ manuscript/
+```
+
+### Extension
+
+#### `LEDGER-IO-1` — route ledger provenance through `bond-utilities` `mission_io`
+
+**Missing:** `MissionLedger.to_json` / `from_json` and the persistence in
+`scripts/advance_mission.py:32,72` are local stdlib equivalents of the Layer-0
+provenance convention.  `bond-utilities` **is built** and ships the convention
+at `../bond-utilities/src/bond_utilities/mission_io.py`:
+`record_provenance_outcome` (line 153), `save_record` (92) / `load_record`
+(126), `validate_record` (61), `verify_provenance` (212), `hash_payload` (45).
+This package has simply not adopted it, so a coordinator ledger file carries no
+payload hash and cannot be verified by the fleet's own verifier.
+
+The pure-core JSON codecs stay regardless — the layer contract forbids `src/`
+importing a sibling.  Only `scripts/advance_mission.py` changes.
+
+**Done looks like:** `scripts/advance_mission.py` writes the ledger through
+`mission_io.save_record` with a provenance record, and a persisted ledger file
+satisfies `mission_io.verify_provenance`.
+
+**Demonstrate:**
+
+```bash
+uv run python scripts/advance_mission.py --slug goldfinger --phase recon \
+    --by agent-007 --version 0.1.0 --note "adoption check"
+uv run python -c "
+import json, sys; sys.path.insert(0, '../bond-utilities/src')
+from bond_utilities.mission_io import verify_provenance
+assert verify_provenance(json.load(open('output/data/mission_ledger.json')))
+print('provenance verified')"
+```
+
+#### `LAYER-PROBE-1` — per-layer infra readiness is never actually probed
+
+**Missing:** `build_status(..., layer_ready=...)`
+(`src/bond_coordinator/status.py:198-208`) accepts injected readiness, and
+`_layer_summaries` (`status.py:145-177`) infers `layer1` from the `bond_api`
+importability probe.  No shipped caller supplies the rest, so `layer0`,
+`layer2`, `layer3`, and `layer4` render as `None` — the "not probed" tri-state —
+in every status report and every dashboard, including for `bond-utilities`
+(Layer 0) and this package itself (Layer 2), both of which are built and gated.
+
+The display is honest today (it says *not probed*, not *not ready*), so this is
+an extension rather than a defect.  The probe itself belongs in `bond-ops`,
+which runs the per-package gates; the coordinator should consume its output
+rather than re-implement gate running.  This item therefore unblocks only after
+`GATE-PATH-1` gives it a contract to consume.
+
+**Done looks like:** `scripts/status_report.py` and
+`scripts/build_situation_room.py` pass a `layer_ready` mapping derived from the
+fleet gate output, and a default run reports a boolean per infra layer.
+
+**Demonstrate:**
+
+```bash
+uv run python scripts/status_report.py --json \
+  | python3 -c "import json,sys; L={l['layer']: l['ready'] for l in json.load(sys.stdin)['layers']}; print(L); assert None not in L.values()"
+```
+
+## Known limitations (not bugs)
+
+- **No `mission.py`, no `MissionProvider`.**  This is Layer 2 — the *consumer*
+  of film providers, not one of them.  A synthetic provider here would inject a
+  non-film into the fleet's discovery surface and make the registry a member of
+  the roster it governs.  See `docs/architecture.md`, "Consuming the bond-api
+  MissionProvider".
 - **`src/bond_coordinator/types.py` mirrors `bond-api` shapes** even though
-  `bond-api` is built. That is the layer contract (the pure core imports no
-  sibling), not an unfinished migration.
+  `bond-api` is built.  That is the layer contract — the pure core imports no
+  sibling — not an unfinished migration.
+- **The shipped `ROSTER` literal stays `scaffolded` / `coverage=None`.**  A
+  literal is not a measurement.  `gates.py` is the only path by which a row
+  becomes `ready`/`building`/`red` with a real number, and every renderer states
+  which of the two it is showing.  This was forced by the audit: the earlier
+  claim that the fleet *was* at phase-0 scaffold was false (all 27 film packages
+  are gated at 96.58–100.00% in `../output/aggregate/gate_manifest.json`), and
+  the honest scope is now "the literal is an unmeasured seed", not "the fleet is
+  unbuilt".
 - **Live-fleet tests assert this package's contract, never a sibling's
-  internals.** Sibling packages are developed concurrently and may be mid-edit;
-  a test that pins another package's codename or gadget name makes this
-  suite red for someone else's work in progress.
+  internals.**  Sibling packages are developed concurrently and may be mid-edit;
+  a test pinning another package's codename, gadget name, or file layout turns
+  this suite red for someone else's work in progress.  This is the reason
+  `GATE-PATH-1` cannot be closed by a test written here — it needs a contract
+  published from the other side.
+- **`scripts/` are thin orchestrators verified by subprocess smoke tests.**
+  Accepted today; `SCRIPTS-COV-1` exists to make that either measured or
+  explicitly stated, not to relitigate the pattern.
+- **Local-only working tree.**  There is no remote and nothing is ever pushed;
+  commits are path-scoped inside this package.
 
-## Guardrails (persistent)
+## Verification
 
-- Zero-mock testing; real data + computation only.
-- ≥90% line+branch coverage on `src/` (`--cov-fail-under=90`).
-- Deterministic: fixed seeds/clocks; no untracked random reliance.
-- Thin orchestrators in `scripts/`; business logic in `src/` — including
-  *interpretation* (see `reconcile.gadget_purpose`).
-- Cross-package reads guarded per film with `except Exception`, reported on
-  stderr, never silent.
-- `ruff` + `mypy` clean on `src/bond_coordinator` and `scripts/`.
-- Local-only: never push to any remote (there is none).  Commit path-scoped
-  inside this package only.
+The gates that govern this package.  Run all four from **inside** this
+directory (it is not a member of the template `uv` workspace).
+
+```bash
+uv sync --extra dev
+
+# 1. Suite + coverage gate — expect: 221 passed, 100.00%, "Required test
+#    coverage of 90% reached."
+uv run pytest tests/ --cov=src --cov-fail-under=90
+
+# 2. Lint — expect: "All checks passed!"
+uv run ruff check src scripts tests
+
+# 3. Format — expect: "30 files already formatted"
+uv run ruff format --check src scripts tests
+
+# 4. Types — expect: "Success: no issues found in 14 source files"
+uv run mypy
+```
+
+Zero mocks, zero skips, deterministic (fixed UTC clock in `tests/conftest.py`;
+the situation room is asserted byte-identical across repeated builds).
+
+Persistent guardrails, unchanged: pure `src/` core (stdlib + `pyyaml`, no
+`infrastructure.*`, no sibling imports, no filesystem side-effects);
+interpretation lives in `src/` not `scripts/` (see `reconcile.gadget_purpose`);
+cross-package reads guarded per film with `except Exception` and reported on
+stderr, never silent; ≥90% line + branch on `src/`.
