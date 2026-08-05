@@ -1,10 +1,12 @@
 """Reconcile: registry codename overrides + gadget harvest (pure core tests).
 
 Real-data, zero-mock coverage of :mod:`bond_coordinator.reconcile` plus a
-real-films CLI smoke (subprocess) that reconciles against actual film
-packages once Phase 2 has built them.  The pure merge tests use synthetic
-codename deltas (the coordinator's provisional codenames often already match
-the films' real ones); the CLI test asserts real output content.
+real-films CLI test (subprocess) that reconciles against every built film
+package and asserts the exact override count the run itself reports.  The pure
+merge tests use synthetic codename deltas (many of the coordinator's
+provisional codenames already match the films' real ones); the CLI test
+derives its expectation from the manifest the run wrote, so it pins no
+sibling's internals while still being able to fail.
 """
 
 from __future__ import annotations
@@ -13,7 +15,13 @@ from pathlib import Path
 
 import pytest
 
-from bond_coordinator import Gadget, GadgetRegistry, subset_roster
+from bond_coordinator import (
+    FILM_SLUGS,
+    Gadget,
+    GadgetRegistry,
+    get_package,
+    subset_roster,
+)
 from bond_coordinator.reconcile import (
     gadget_purpose,
     harvest_gadgets,
@@ -188,20 +196,39 @@ def test_reconcile_report_lists_overrides(sample_roster) -> None:
     assert "codenames overridden by film declarations: 1" in text
 
 
-REAL_FILMS = ("goldfinger", "spectre", "no_time_to_die")
-_REAL_FILMS_READY = all(
-    (BOND / slug / "src" / slug / "mission.py").is_file() for slug in REAL_FILMS
+#: Every film in the registry, not a hand-picked sample.  The previous version
+#: of this test reconciled three films — goldfinger, spectre, no_time_to_die —
+#: which happen to be three of the films whose declared codename EQUALS the
+#: registry's provisional one, so the override path it claimed to exercise was
+#: never entered.  Sampling the roster is what let that go unnoticed; the fix
+#: is to stop sampling.
+REAL_FILMS: tuple[str, ...] = FILM_SLUGS
+_BUILT_FILMS = tuple(
+    slug for slug in REAL_FILMS if (BOND / slug / "src" / slug / "mission.py").is_file()
 )
 
 
-@pytest.mark.skipif(
-    not _REAL_FILMS_READY, reason="real film packages not built yet (Phase 2)"
-)
+@pytest.mark.skipif(not _BUILT_FILMS, reason="no film package is built yet (Phase 2)")
 def test_reconcile_cli_against_real_films(tmp_path: Path) -> None:
-    """The thin CLI reconciles real films: real codenames + gadgets on stdout."""
+    """The CLI's reported override count must equal the count in its manifest.
+
+    The assertion that used to live here was ``"codenames overridden by film
+    declarations:" in result.stdout`` — the label prefix, which matches for
+    every possible count including zero, so it could not fail.  The count is
+    now *derived* from the manifest the same run wrote (each film-declared
+    codename compared against the registry's provisional one) and asserted
+    exactly, so a regression that stops counting overrides — for instance
+    rendering the report against the already-reconciled roster, which compares
+    every declared codename to itself — turns this red.
+
+    Nothing here pins a sibling's codename: the expectation is computed from
+    whatever the fleet declares at run time, so a film may rename freely.
+    """
+    import json as _json
     import subprocess
     import sys
 
+    manifest_path = tmp_path / "reconciled.json"
     result = subprocess.run(
         [
             sys.executable,
@@ -209,7 +236,7 @@ def test_reconcile_cli_against_real_films(tmp_path: Path) -> None:
             "--slugs",
             *REAL_FILMS,
             "--write",
-            str(tmp_path / "reconciled.json"),
+            str(manifest_path),
         ],
         capture_output=True,
         text=True,
@@ -217,30 +244,42 @@ def test_reconcile_cli_against_real_films(tmp_path: Path) -> None:
         check=False,
     )
     assert result.returncode == 0, result.stderr
-    for slug in REAL_FILMS:
-        assert f"{slug}:" in result.stdout
-    assert "codenames overridden by film declarations:" in result.stdout
 
-    # Assert the coordinator's contract against whatever the fleet's real state
-    # is right now, rather than pinning a sibling's internals: every requested
-    # film appears in the manifest, and each one either loaded (declaring a
-    # codename) or was reported as skipped.  A sibling mid-edit must not turn
-    # this package's suite red — that is exactly the isolation being tested.
-    import json as _json
-
-    manifest = _json.loads((tmp_path / "reconciled.json").read_text())
+    manifest = _json.loads(manifest_path.read_text())
     assert set(REAL_FILMS) <= set(manifest["films"])
     declared = manifest["film_declared"]
+    assert declared, (
+        "no built film declared a codename; the override contract below would "
+        "be vacuous — check that bond-api discovery still works"
+    )
+
     for slug in REAL_FILMS:
+        assert f"{slug}:" in result.stdout
         assert slug in declared or slug in manifest["skipped"], (
             f"{slug} neither declared a codename nor was reported skipped"
         )
         assert manifest["films"][slug]["codename"], f"{slug} has no codename at all"
+
+    # Every film that loaded supplied a non-empty codename, and the reconciled
+    # roster carries it (not the provisional one).
+    overrides = {
+        slug: codename
+        for slug, codename in declared.items()
+        if codename != get_package(slug).codename
+    }
     for slug, codename in declared.items():
-        # A film that loaded must have supplied a real, non-empty codename,
-        # and the reconciled roster must carry it.
         assert codename
         assert manifest["films"][slug]["codename"] == codename
+
+    # The exact count, and every individual diff line, must appear on stdout.
+    assert f"codenames overridden by film declarations: {len(overrides)}" in (
+        result.stdout
+    ), result.stdout
+    for slug, codename in overrides.items():
+        provisional = get_package(slug).codename
+        assert f"* {slug}: {provisional} -> {codename} (film-declared)" in (
+            result.stdout
+        ), f"{slug} override missing from the report"
 
 
 def _write_film(root: Path, slug: str, body: str) -> None:
@@ -249,6 +288,66 @@ def _write_film(root: Path, slug: str, body: str) -> None:
     pkg.mkdir(parents=True)
     (pkg / "__init__.py").write_text("", encoding="utf-8")
     (pkg / "mission.py").write_text(body, encoding="utf-8")
+
+
+_DECLARING_FILM = '''\
+"""Synthetic film declaring its own codename (positive control)."""
+
+from bond_api.protocol import MissionBrief
+
+
+class MissionProvider:
+    film = "dr_no"
+
+    def brief(self):
+        return MissionBrief(
+            film="dr_no", codename="DECLARED CODENAME", objectives=("o",)
+        )
+
+    def recon(self, request): ...
+    def plan(self, brief): ...
+    def execute(self, plan): ...
+    def debrief(self, outcome): ...
+'''
+
+
+def test_reconcile_cli_reports_a_real_codename_override(tmp_path: Path) -> None:
+    """Positive control: an override must be *visible and counted* on stdout.
+
+    The CLI previously rendered the report against the already-reconciled
+    roster, so every declared codename was compared to itself: the
+    ``provisional -> declared`` line was unreachable and the override count
+    was structurally pinned to 0 no matter how many films overrode.  This
+    materialises a film whose declared codename differs from the registry's
+    provisional one and asserts both the diff line and the count.
+    """
+    import subprocess
+    import sys
+
+    root = tmp_path / "bond"
+    root.mkdir()
+    _write_film(root, "dr_no", _DECLARING_FILM)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(BOND / "bond-coordinator" / "scripts" / "reconcile.py"),
+            "--slugs",
+            "dr_no",
+            "--bond-root",
+            str(root),
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(BOND / "bond-coordinator"),
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    provisional = get_package("dr_no").codename
+    assert (
+        f"* dr_no: {provisional} -> DECLARED CODENAME (film-declared)" in result.stdout
+    ), result.stdout
+    assert "codenames overridden by film declarations: 1" in result.stdout
 
 
 def test_reconcile_isolates_a_broken_film(tmp_path: Path) -> None:

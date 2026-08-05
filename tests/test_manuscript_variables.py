@@ -82,6 +82,49 @@ class TestGenerateVariables:
         assert variables["REGISTRY_COVERAGE_AT_90"] == "0"
         assert len(variables["REGISTRY_PACKAGES_CSV"].split(", ")) == 27
 
+    def test_seed_roster_declares_itself_unmeasured(self, config_path: Path) -> None:
+        variables = generate_variables(config_path)
+        assert variables["REGISTRY_MEASUREMENT_SOURCE"] == (
+            "none — registry seed defaults (status/coverage unmeasured)"
+        )
+
+    def test_measured_roster_moves_the_status_tokens(self, config_path: Path) -> None:
+        """Gate output must reach the manuscript, and be labelled as measured.
+
+        The prose in `03_results.md` describes these tokens; if applying real
+        gate results could not change them, that description would be
+        decorative.
+        """
+        from bond_coordinator import apply_gate_results, build_roster
+        from bond_coordinator.gates import parse_gate_manifest
+
+        results = parse_gate_manifest(
+            {
+                "packages": [
+                    {"package": "goldfinger", "coverage": 100.0, "verdict": "ok"},
+                    {"package": "skyfall", "coverage": 92.0, "verdict": "ok"},
+                    {
+                        "package": "dr_no",
+                        "coverage": 88.0,
+                        "failed": 1,
+                        "rc": 1,
+                        "verdict": "fail",
+                    },
+                ]
+            }
+        )
+        variables = generate_variables(
+            config_path, roster=apply_gate_results(build_roster(), results)
+        )
+        assert variables["REGISTRY_READY"] == "2"
+        assert variables["REGISTRY_RED"] == "1"
+        assert variables["REGISTRY_SCAFFOLDED"] == "24"
+        assert variables["REGISTRY_COVERAGE_KNOWN"] == "3"
+        assert variables["REGISTRY_COVERAGE_AT_90"] == "2"
+        assert variables["REGISTRY_MEASUREMENT_SOURCE"] == (
+            "measured gate output on 3 of 27 registry rows"
+        )
+
     def test_registry_tokens_with_fixture_subset(self, config_path: Path) -> None:
         roster = subset_roster(SAMPLE_SLUGS)
         variables = generate_variables(config_path, roster=roster)

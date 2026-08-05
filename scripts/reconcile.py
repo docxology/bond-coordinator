@@ -182,7 +182,12 @@ def main() -> int:
     roster = build_roster()
     reconciled = override_codenames(roster, briefs)
     registry = harvest_gadgets(GadgetRegistry(), film_gadgets)
-    print(reconcile_report(reconciled, briefs))
+    # The report must be rendered against the PROVISIONAL roster, not the
+    # reconciled one: it diffs each record's codename against the film's
+    # declaration.  Passing ``reconciled`` compares the declared codename to
+    # itself, so every override silently reports as "unchanged" and the count
+    # is structurally pinned to 0.
+    print(reconcile_report(roster, briefs))
     if skipped_all:
         print(
             f"[reconcile] skipped (unloadable/not built): {', '.join(skipped_all)}",

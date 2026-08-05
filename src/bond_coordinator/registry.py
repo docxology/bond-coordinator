@@ -14,9 +14,17 @@ the single source of truth for the whole fleet.
 
 Status / coverage policy
 ------------------------
-Phase-0 scaffolds start at ``scaffolded`` with ``coverage=None`` (nothing
-measured yet).  Status and coverage are only ever updated from measured gate
-output (``bond-ops`` aggregate runs) — never hand-asserted.
+Every row in the shipped ``ROSTER`` literal carries ``status=scaffolded`` and
+``coverage=None``.  Those are **seed defaults**, not measurements: they mean
+"no gate output has been applied to this record", and they say nothing about
+whether the corresponding film package exists, builds, or passes.  A literal
+in this file could never be a measurement, which is exactly why measured
+values are not written here.
+
+Status and coverage are populated only by
+:func:`bond_coordinator.gates.apply_gate_results`, from a ``bond-ops`` gate
+aggregate, and every renderer that displays them also states which of the two
+it is showing (see ``gates.measurement_summary``).
 """
 
 from __future__ import annotations
@@ -54,7 +62,7 @@ def _record(
     codename: str,
     concepts: tuple[str, ...],
 ) -> PackageRecord:
-    """Build a phase-0 scaffold record (status/coverage are not yet measured)."""
+    """Build a seed record: identity only, status/coverage left unmeasured."""
     return PackageRecord(
         rank=rank,
         slug=slug,

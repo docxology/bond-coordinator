@@ -51,7 +51,10 @@ Layer 1 (`bond-api`) **is built**, and `scripts/reconcile.py` consumes its
 `MissionProvider` discovery directly.  The pure-core mirror of the protocol
 shapes (`src/bond_coordinator/types.py`) nevertheless stays: it is an
 architectural boundary that keeps `src/` free of sibling imports, not a
-placeholder waiting for the real package.  Layer 0 (`bond-utilities`) is not
-yet built; until it is, ledger provenance uses local stdlib JSON codecs, and
-routing it through that package's shared conventions is the one open
-integration item (see `TODO.md`).
+placeholder waiting for the real package.  Layer 0 (`bond-utilities`) **is
+built** as well, and its `mission_io` module carries the fleet's
+provenance-record conventions; this package has not yet adopted it — ledger
+provenance still uses local stdlib JSON codecs, and routing it through Layer 0
+is the one open integration item (see `TODO.md`).  Layer 4's `bond-ops`
+produces the fleet gate aggregate that `src/bond_coordinator/gates.py`
+consumes, which is how a registry row acquires a measured status and coverage.

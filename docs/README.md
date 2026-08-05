@@ -22,7 +22,7 @@ modifying any project file.  It is the gate for the other documents.
 | [`output_inventory.md`](output_inventory.md) | Producer/consumer graph for generated artifacts. |
 | [`quickstart.md`](quickstart.md) | 5-minute first run. |
 | [`troubleshooting.md`](troubleshooting.md) | Symptom-driven recipes. |
-| [`faq.md`](faq.md) | Common questions (no figures, all-scaffolded, codenames, deps). |
+| [`faq.md`](faq.md) | Common questions (no figures, seed vs. measured status, codenames, deps). |
 | [`forking_guide.md`](forking_guide.md) | Own-git / local-only / boundary contract. |
 | [`rendering_pipeline.md`](rendering_pipeline.md) | Manuscript token hydration (no pixel pipeline here). |
 

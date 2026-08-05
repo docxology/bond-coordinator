@@ -1,8 +1,8 @@
 # Methodology {#sec:methodology}
 
 The pure core lives under `src/bond_coordinator/`: `types.py` (protocol
-mirror), `registry.py`, `reconcile.py`, `ledger.py`, `status.py`, and
-`situation.py`, plus `manuscript_variables.py`.  All are pure: they import
+mirror), `registry.py`, `reconcile.py`, `gates.py`, `ledger.py`, `status.py`,
+and `situation.py`, plus `manuscript_variables.py`.  All are pure: they import
 only the standard library and `pyyaml`, never `infrastructure.*`, and never a
 sibling BOND package.  Thin orchestrators in `scripts/` bind them to the
 filesystem (persisting the ledger, writing the dashboard, printing the report).
@@ -17,6 +17,18 @@ measured percentage or `None`.  Mission codenames are **assigned by mission
 control** from each film's canonical plot element (e.g. Goldfinger's Operation
 Grand Slam → `GRAND SLAM`) and are provisional until a film package declares
 its own via `bond-api`.
+
+The shipped `ROSTER` literal fills only the identity fields; every row's status
+and coverage are seed defaults (`scaffolded` / `None`) meaning *unmeasured by
+this process*.  `gates.py` is the sole path by which they change:
+`parse_gate_manifest` decodes the `bond-ops` gate aggregate — raising on a
+malformed manifest rather than degrading to an empty result, since "nothing
+measured" is indistinguishable from an honest seed — and `apply_gate_results`
+derives each row's status by rule (failed run → `red`; passing at or above
+`COVERAGE_FLOOR` → `ready`; passing below it, or passing with no coverage
+number, → `building`; no gate row → untouched).  The rule is what makes the
+status a derived fact rather than an assertion, and it is asserted in both
+directions by tests that break when the rule is altered.
 
 The registry also provides `get_package`, `find_by_status`, and `subset_roster`
 (the last is how tests seed deterministic film fixtures without depending on

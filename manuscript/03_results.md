@@ -9,11 +9,24 @@ tokens — they are never hand-authored in prose.
 The registry currently tracks **{{REGISTRY_TOTAL}}** film packages.  Their
 distribution across statuses is {{REGISTRY_SCAFFOLDED}} scaffolded,
 {{REGISTRY_BUILDING}} building, {{REGISTRY_READY}} ready, and {{REGISTRY_RED}}
-red.  Because the fleet is still in phase-0 scaffold, every package is
-`scaffolded` and none has measured coverage yet; the coverage token therefore
-reports {{REGISTRY_COVERAGE_KNOWN}} measured packages with mean
-{{REGISTRY_COVERAGE_MEAN}} and {{REGISTRY_COVERAGE_AT_90}} at/above the
-{{GATE_COVERAGE_FLOOR}} gate.
+red, with {{REGISTRY_COVERAGE_KNOWN}} packages carrying measured coverage
+(mean {{REGISTRY_COVERAGE_MEAN}}, {{REGISTRY_COVERAGE_AT_90}} at/above the
+{{GATE_COVERAGE_FLOOR}} gate).
+
+Those figures describe **the roster this document was built from**, and their
+provenance is stated by the same generator that produced them:
+*{{REGISTRY_MEASUREMENT_SOURCE}}*.  The distinction matters, because the two
+possible answers look identical in the numbers and are not the same claim.
+The `ROSTER` literal in `registry.py` ships every row as `scaffolded` with
+`coverage=None` — a seed default, meaning *this process has measured nothing*,
+never *the fleet is unbuilt*.  A build run with `--no-gate-manifest` therefore
+reports all {{REGISTRY_TOTAL}} rows scaffolded with no coverage, and that is a
+statement about the seed, not a measurement of the {{REGISTRY_TOTAL}} film
+packages.  Measured values enter only through
+`gates.apply_gate_results`, from the `bond-ops` gate aggregate; a build run
+against that manifest reports each package's real status and real coverage.
+Nothing in this package measures a film package itself, and no figure above is
+evidence about any film's actual test suite.
 
 ## Registry completeness
 
@@ -28,10 +41,12 @@ software payload, so the registry is both an inventory and a build briefing.
 
 The coordinator declares **{{REGISTRY_LAYER_COUNT}}** topology layers —
 {{REGISTRY_LAYER_CSV}} — and reports each in the status snapshot and the
-situation room.  In this build every film is scaffolded, so the `films` layer
-reports all {{REGISTRY_TOTAL}} tracked with none ready; the infrastructure
-layers report readiness only where probed (layer 1 tracks the `bond-api`
-probe).  This turn-count is derived, never hand-authored.
+situation room.  The `films` layer reports {{REGISTRY_TOTAL}} tracked with
+{{REGISTRY_READY}} ready and mean coverage over the measured rows only; the
+infrastructure layers report readiness only where probed (layer 1 tracks the
+`bond-api` probe, the rest report the tri-state "not probed" unless a caller
+supplies readiness).  Every one of these counts is derived from the roster
+handed to the generator, never hand-authored.
 
 ## Reconciliation against the real fleet
 

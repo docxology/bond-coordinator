@@ -24,6 +24,15 @@ from .types import Gadget, GadgetRegistry, MissionPhase, PackageStatus
 #: Recent-transition rows shown in the audit-trail timeline section.
 AUDIT_TRAIL_LIMIT = 12
 
+#: Provenance defaults.  A caller that supplies no reconciled codenames and no
+#: gate results gets a dashboard that says so, in these words.
+DEFAULT_CODENAME_SOURCE = (
+    "registry seed — provisional codenames, no film declarations merged"
+)
+DEFAULT_MEASUREMENT_SOURCE = (
+    "registry seed — status/coverage unmeasured (no gate results applied)"
+)
+
 #: Coverage thresholds driving the heat coloring.  The upper bucket *is* the
 #: suite gate — imported rather than restated so the legend can never drift
 #: away from the number ``status.py`` actually enforces.
@@ -181,12 +190,23 @@ def build_situation_room(
     roster: tuple[PackageRecord, ...] = ROSTER,
     ledger: MissionLedger | None = None,
     gadgets: GadgetRegistry | None = None,
+    *,
+    codename_source: str = DEFAULT_CODENAME_SOURCE,
+    measurement_source: str = DEFAULT_MEASUREMENT_SOURCE,
 ) -> str:
     """Render the situation-room HTML document.
 
     Deterministic given its inputs: the only time-dependent value is
     ``status.generated_at`` (inject a fixed ``now`` into
     :func:`bond_coordinator.status.build_status` for byte-stable output).
+
+    ``codename_source`` and ``measurement_source`` are rendered verbatim in the
+    provenance block.  Their defaults describe the *unreconciled, unmeasured*
+    roster, because that is what the caller passed if it supplied neither: the
+    dashboard must never present the registry's provisional codenames or its
+    seed status/coverage defaults as though they came from a film declaration
+    or a gate run.  ``scripts/build_situation_room.py`` overrides both with the
+    manifests it actually loaded.
     """
     if ledger is None:
         ledger = MissionLedger(roster)
@@ -293,6 +313,12 @@ def build_situation_room(
   <p>Blocked: <strong>{blocked_html}</strong></p>
   <p>Stale missions (unfinished, no update in {escape(str(status.stale_days))} days): <strong>{escape(str(len(status.stale_packages)))}</strong></p>
   <p>Layer 1 dependency (bond-api): <strong>{dependency_html}</strong></p>
+</section>
+
+<section>
+  <h2>Data provenance</h2>
+  <p>Codenames: <strong>{escape(codename_source)}</strong></p>
+  <p>Status &amp; coverage: <strong>{escape(measurement_source)}</strong></p>
 </section>
 
 {layers_section}

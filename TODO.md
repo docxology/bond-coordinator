@@ -24,8 +24,10 @@ film fleet consume them.
 1. **Route ledger provenance through `bond-utilities` `mission_io`.**
    `MissionLedger.to_json`/`from_json` and `scripts/advance_mission.py`
    persistence are local stdlib equivalents of the Layer-0 conventions.
-   `bond-utilities` is not yet built; adopt it when it lands.  The pure-core
-   JSON codecs stay regardless — only the *script* changes.
+   `bond-utilities` **is built** (`src/bond_utilities/mission_io.py` provides
+   `record_provenance_outcome`, `save_record`/`load_record`, `verify_provenance`);
+   this package simply has not adopted it.  The pure-core JSON codecs stay
+   regardless — only the *script* changes.
 2. **Feed per-layer infra readiness from a real fleet probe.**
    `build_status(layer_ready=...)` accepts injected readiness and `layer1`
    is inferred from the `bond_api` importability probe, but `layer0`,
@@ -33,10 +35,18 @@ film fleet consume them.
    caller supplies them.  A real probe belongs in `bond-ops`, which runs the
    per-package gates; the coordinator should consume its output rather than
    re-implement gate running.
-3. **Populate measured `status` / `coverage` on `PackageRecord`.**
-   Every roster row is still `scaffolded` with `coverage=None`, which is the
-   honest state: these fields are only ever written from measured gate output.
-   Wire them to the `bond-ops` aggregate run rather than hand-asserting them.
+3. **Consume the fleet gate aggregate from a fleet probe, not a file path.**
+   *Done in part:* `src/bond_coordinator/gates.py` (`parse_gate_manifest`,
+   `apply_gate_results`) turns `bond-ops` gate rows into measured
+   `status`/`coverage` on the roster, and `status_report.py`,
+   `build_situation_room.py`, and `z_generate_manuscript_variables.py` all
+   apply it (`--gate-manifest`, default
+   `../output/aggregate/gate_manifest.json`; `--no-gate-manifest` for a
+   fleet-independent seed run).  The shipped `ROSTER` literal stays
+   `scaffolded`/`coverage=None` on purpose — a literal is not a measurement —
+   and every renderer states which of the two it is showing.  What remains:
+   the manifest path is a convention, not a contract; when `bond-ops` exposes
+   a probe API, consume that instead of a hard-coded relative path.
 4. **Reconsider the `_transition` defensive branch.**
    `ledger.py::MissionLedger._transition` carries a `# pragma: no cover`
    guard for an invalid `jump` value that no public method can produce

@@ -9,6 +9,12 @@ Pure core: no infrastructure imports, stdlib + pyyaml only, deterministic.
 
 from __future__ import annotations
 
+from .gates import (
+    GateResult,
+    apply_gate_results,
+    measurement_summary,
+    parse_gate_manifest,
+)
 from .ledger import SYSTEM_AGENT, SYSTEM_VERSION, LedgerEntry, MissionLedger, utcnow
 from .manuscript_variables import (
     MISSION_LIFECYCLE,
@@ -68,6 +74,7 @@ __all__ = [
     "CoverageSummary",
     "Gadget",
     "GadgetRegistry",
+    "GateResult",
     "LayerSummary",
     "LedgerEntry",
     "MissionLedger",
@@ -76,6 +83,7 @@ __all__ = [
     "PackageStatus",
     "SuiteStatus",
     "__version__",
+    "apply_gate_results",
     "build_roster",
     "build_situation_room",
     "build_status",
@@ -85,7 +93,9 @@ __all__ = [
     "get_package",
     "harvest_gadgets",
     "load_config",
+    "measurement_summary",
     "override_codenames",
+    "parse_gate_manifest",
     "reconcile_report",
     "resolve_manuscript_tree",
     "subset_roster",

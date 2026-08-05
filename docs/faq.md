@@ -14,11 +14,32 @@ generated files — a deliberate divergence from the exemplar's strict
 analysis-to-manuscript contract (documented in
 `docs/architecture.md` and `manuscript/05_experimental_setup.md`).
 
-## Why are all packages `scaffolded` with `coverage=None`?
+## Why does the shipped `ROSTER` say `scaffolded` / `coverage=None`?
 
-Because that is the honest, measured state: the fleet is at phase-0 scaffold.
-Status/coverage are only updated from real gate output, never hand-asserted
-(see `registry.py` docstring).
+Because a literal in a source file is not a measurement.  Those two fields are
+*seed defaults*: they mean "this package has not been measured **by this
+process**", not "this package is unbuilt".  They are not a claim about the
+fleet at all — the fleet's real state lives in the `bond-ops` gate aggregate
+(`../output/aggregate/gate_manifest.json`), and nothing about it is knowable
+from `registry.py`.  To see it rather than take this file's word for it:
+
+```bash
+uv run python scripts/status_report.py --json | python -m json.tool | head -20
+```
+
+which applies that manifest and prints both the measured counts and, in
+`measurement_source`, where they came from.
+
+Measured values enter through `src/bond_coordinator/gates.py`
+(`parse_gate_manifest` → `apply_gate_results`), which reads the `bond-ops`
+aggregate (`../output/aggregate/gate_manifest.json`) and derives each row's
+status by rule: failing run → `red`, passing at/above the floor → `ready`,
+passing below it → `building`, no gate row → left at the seed.
+`status_report.py`, `build_situation_room.py`, and
+`z_generate_manuscript_variables.py` all take `--gate-manifest` (defaulting to
+that path) and `--no-gate-manifest`, and every one of them prints or renders
+which of the two it used.  So a `scaffolded` row on a dashboard always comes
+with the sentence saying whether anything was measured at all.
 
 ## Where do the mission codenames come from?
 
@@ -34,8 +55,10 @@ gadget table.  `src/bond_coordinator/types.py` still mirrors the protocol
 shapes on purpose: importing a sibling package from the pure core would break
 the layer contract, so the real protocol types are touched only by the thin
 orchestrator, which converts them to plain data first.  The mirror is a
-boundary, not a placeholder.  `bond-utilities` (Layer 0) is not yet built; the
-ledger uses local stdlib JSON codecs until it is (see `TODO.md`).
+boundary, not a placeholder.  `bond-utilities` (Layer 0) **is built** too — its
+`mission_io` module holds the fleet's provenance-record conventions — but this
+package has not adopted it: the ledger still uses local stdlib JSON codecs, and
+routing it through Layer 0 is open work (see `TODO.md` item 1).
 
 ## The status report says `dependency_ready: false`. Is bond-api missing?
 

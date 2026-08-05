@@ -17,6 +17,7 @@ from typing import Any
 
 import yaml
 
+from .gates import measured_row_summary
 from .ledger import MissionLedger
 from .registry import ROSTER, SUITE_NAME, PackageRecord
 from .status import COVERAGE_FLOOR, DEFAULT_STALE_DAYS, SUITE_LAYERS, build_status
@@ -65,7 +66,13 @@ def generate_variables(
     it never gates on generated files (documented in ``docs/architecture.md``).
 
     Values are computed fresh from ``roster`` (defaults to the full 27-film
-    registry) so counts can never go stale.
+    registry) so counts can never go stale.  The default roster is the
+    registry's *unmeasured seed*: its status and coverage tokens then report
+    the seed defaults, and ``REGISTRY_MEASUREMENT_SOURCE`` says so.  Pass a
+    roster that measured gate output has been applied to (see
+    :func:`bond_coordinator.gates.apply_gate_results`, which
+    ``scripts/z_generate_manuscript_variables.py`` does whenever a gate
+    manifest is available) to hydrate the manuscript with measured figures.
     """
     config = load_config(Path(config_path))
     ledger = MissionLedger(roster)
@@ -114,6 +121,10 @@ def generate_variables(
         "REGISTRY_COVERAGE_UNKNOWN": str(status.coverage.unknown),
         "REGISTRY_COVERAGE_MEAN": status.coverage.formatted_mean(),
         "REGISTRY_COVERAGE_AT_90": str(status.coverage.at_or_above_floor),
+        # Provenance of the two lines above: derived from the records handed to
+        # this call, so the manuscript always states whether its status and
+        # coverage figures are measured or are the registry's seed defaults.
+        "REGISTRY_MEASUREMENT_SOURCE": measured_row_summary(roster),
         "REGISTRY_BLOCKED_COUNT": str(len(status.blocked_packages)),
         "REGISTRY_STALE_COUNT": str(len(status.stale_packages)),
         "REGISTRY_PACKAGES_CSV": ", ".join(record.slug for record in roster),

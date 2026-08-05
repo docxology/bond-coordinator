@@ -19,6 +19,7 @@ whether it is healthy* are machine-checkable facts.
 | **Protocol mirror** | `src/bond_coordinator/types.py` | `Asset`, `AssetKind`, `Gadget`, `GadgetRegistry`, `PackageStatus`, `MissionPhase` — pure-core mirrors of the `bond-api` shapes, so the core keeps zero sibling imports. |
 | **Registry** | `src/bond_coordinator/registry.py` | Authoritative, canon-ordered list of all 27 film packages: slug, film, year, mission codename, status, measured coverage. |
 | **Reconcile** | `src/bond_coordinator/reconcile.py` | Merge real films' codenames + gadget tables over the provisional registry (refresh/replace semantics), plus `gadget_purpose` — the payload→one-line-purpose rule that refuses to borrow a builtin's docstring. `scripts/reconcile.py` drives discovery via `bond-api`. |
+| **Gate results** | `src/bond_coordinator/gates.py` | The measurement boundary: `parse_gate_manifest` decodes the `bond-ops` gate aggregate (loudly — a malformed manifest raises rather than degrading to "nothing measured"), `apply_gate_results` derives each row's `status`/`coverage` by rule. The shipped `ROSTER` literal is an unmeasured **seed**; this is the only way a row becomes `ready`/`building`/`red`. |
 | **Mission-state ledger** | `src/bond_coordinator/ledger.py` | Each package's lifecycle (`brief → recon → plan → execute → debrief`) with forward-only transition rules, attributable-identity validation, an append-only audit trail, and deterministic audit summaries (`transition_summary`, `per_agent_summary`, `phase_timeline`). |
 | **Suite status** | `src/bond_coordinator/status.py` | Deterministic aggregate snapshot: counts by state/phase, coverage summary, stale/blocked flags (carrying the `stale_days` threshold actually applied), and **per-layer summaries** of the declared suite topology. Owns `COVERAGE_FLOOR`, the gate the dashboard legend reads. |
 | **Situation room** | `src/bond_coordinator/situation.py` | Self-contained HTML dashboard: per-package table with **mission-timeline bars** and **coverage heat**, suite-layers table, **per-film gadget groups**, and a recent-transitions audit tail. |
@@ -46,20 +47,30 @@ uv run mypy
 ### Run the tools
 
 ```bash
-# Human-readable + JSON suite report (also writes output/data/suite_status.json)
+# Human-readable + JSON suite report (also writes output/data/suite_status.json).
+# Status/coverage come from the fleet gate aggregate when it exists
+# (../output/aggregate/gate_manifest.json); --no-gate-manifest reports the
+# unmeasured registry seed instead.  Either way the `gates:` line names which.
 uv run python scripts/status_report.py
 uv run python scripts/status_report.py --json
+uv run python scripts/status_report.py --no-gate-manifest
 
 # Advance one package's mission phase (persists output/data/mission_ledger.json)
 uv run python scripts/advance_mission.py --slug goldfinger --phase recon \
     --by agent-007 --version 0.1.0 --note "watching Fort Knox"
 
-# Regenerate the situation-room HTML dashboard (output/situation_room.html)
-uv run python scripts/build_situation_room.py
-
-# Reconcile the registry against real film packages (codenames + gadgets)
+# Reconcile the registry against real film packages (codenames + gadgets).
+# --write produces the manifest the situation room reads for real codenames.
 uv run python scripts/reconcile.py
-uv run python scripts/reconcile.py --gadgets output/data/gadgets.json
+uv run python scripts/reconcile.py --gadgets output/data/gadgets.json \
+    --write output/data/reconciled.json
+
+# Regenerate the situation-room HTML dashboard (output/situation_room.html).
+# Reads the reconcile manifest (film-declared codenames) and the gate manifest
+# (measured status/coverage) when present, and renders a provenance block
+# naming both — a provisional codename or an unmeasured row is never shown as
+# though it were reconciled or measured.
+uv run python scripts/build_situation_room.py
 
 # Hydrate manuscript {{TOKEN}}s (output/manuscript/*.md, runs last)
 uv run python scripts/z_generate_manuscript_variables.py
@@ -92,9 +103,13 @@ sibling never aborts a fleet-wide run.  Full contract and degradation table:
 - Package: `bond-coordinator` (Layer 2)
 - Codename: `MISSION CONTROL`
 - Depends on: `bond-api` (Layer 1, **built** — drives `scripts/reconcile.py`
-  discovery) and `bond-utilities` (Layer 0, not yet built, for provenance I/O).
-  The pure core deliberately imports neither: it ships its own protocol mirror
-  (`src/bond_coordinator/types.py`) to keep `src/` sibling-free (see `TODO.md`).
+  discovery) and `bond-utilities` (Layer 0, **also built**, whose `mission_io`
+  module is the fleet's provenance-record convention). This package does **not
+  use `mission_io` yet**: `MissionLedger`'s JSON codecs and
+  `scripts/advance_mission.py` are still local stdlib equivalents, and routing
+  them through Layer 0 is open work (`TODO.md` item 1). The pure core imports
+  neither sibling by design: it ships its own protocol mirror
+  (`src/bond_coordinator/types.py`) to keep `src/` sibling-free.
 
 ## Repository layout
 

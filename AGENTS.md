@@ -27,6 +27,8 @@ Enforced by `docs/architecture.md` and the `manuscript/layer_contract.yaml`.
 
 1. **What exists?** — `registry.py` holds all 27 film packages (slug, film,
    year, mission codename, status `scaffolded|building|ready|red`, coverage).
+   The shipped literal leaves status/coverage at unmeasured seed defaults;
+   `gates.py` is the only path by which they become measured values.
 2. **Where is it in its mission?** — `ledger.py` tracks
    `brief → recon → plan → execute → debrief` with forward-only transition
    rules and an append-only audit trail.
@@ -63,20 +65,21 @@ src/bond_coordinator/
     types.py                Asset, AssetKind, Gadget, GadgetRegistry, PackageStatus, MissionPhase (bond-api mirror)
     registry.py             PackageRecord, ROSTER (27), build_roster, get_package, find_by_status, subset_roster
     reconcile.py            gadget_purpose, override_codenames, harvest_gadgets, reconcile_report
+    gates.py                GateResult, parse_gate_manifest, apply_gate_results, measurement_summary, measured_row_summary
     ledger.py               LedgerEntry, MissionLedger (transitions, validation, audit summaries, staleness, JSON)
     status.py               COVERAGE_FLOOR, CoverageSummary, BlockedPackage, LayerSummary, SUITE_LAYERS, SuiteStatus, build_status
     situation.py            build_situation_room, write_situation_room (coverage heat, mission timeline, per-film gadgets, layers, audit tail)
     manuscript_variables.py load_config, generate_variables, resolve_manuscript_tree
     __init__.py             public API
 scripts/
-    status_report.py        print/persist suite status (human or --json, includes per-layer)
+    status_report.py        print/persist suite status (human or --json, per-layer, --gate-manifest/--no-gate-manifest)
     reconcile.py            merge real films' codenames + gadgets into the registry (bond-api probe)
     advance_mission.py      advance a package's phase in the persisted ledger
-    build_situation_room.py regenerate output/situation_room.html
+    build_situation_room.py regenerate output/situation_room.html (--reconciled, --gate-manifest/--no-gate-manifest)
     z_generate_manuscript_variables.py  hydrate {{TOKEN}}s (runs last; z_ prefix)
 tests/
     conftest.py             5-film deterministic fixture + fixed clock
-    test_registry.py test_ledger.py test_status.py test_situation.py test_reconcile.py
+    test_registry.py test_ledger.py test_status.py test_situation.py test_reconcile.py test_gates.py
     test_manuscript_variables.py test_scripts_smoke.py
 manuscript/                 config.yaml identity + 9 numbered sections (00-07, 99_references) with {{TOKEN}} injection
 docs/                       agent-facing rulebook (read-first: agent_instructions.md)

@@ -57,6 +57,7 @@ track the code.
 | `REGISTRY_COVERAGE_KNOWN` / `REGISTRY_COVERAGE_UNKNOWN` | Measured / unmeasured count |
 | `REGISTRY_COVERAGE_MEAN` | Mean measured coverage (or "N/A") |
 | `REGISTRY_COVERAGE_AT_90` | Count at/above the coverage gate |
+| `REGISTRY_MEASUREMENT_SOURCE` | Whether the status/coverage tokens above are measured gate output or the registry's unmeasured seed defaults (derived from the roster's own records) |
 | `REGISTRY_BLOCKED_COUNT` / `REGISTRY_STALE_COUNT` | Blocked / stale count |
 | `REGISTRY_PACKAGES_CSV` | Comma-joined slug list |
 | `REGISTRY_LAYER_COUNT` | Number of declared suite-topology layers |

@@ -7,8 +7,9 @@ append-only audit trail of who/when/version for every transition.
 The ledger is a pure core: it never touches the filesystem itself.  JSON
 serialization (:meth:`MissionLedger.to_json` / :meth:`MissionLedger.from_json`)
 is provided for provenance persistence by thin orchestrators
-(``scripts/advance_mission.py``), mirroring what ``bond-utilities``
-``mission_io`` will provide once that package lands (see ``TODO.md``).
+(``scripts/advance_mission.py``).  It is a local stdlib equivalent of the
+conventions ``bond-utilities`` ``mission_io`` already provides — that package
+is built; this one has simply not adopted it yet (see ``TODO.md`` item 1).
 """
 
 from __future__ import annotations

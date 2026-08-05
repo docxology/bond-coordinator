@@ -49,7 +49,13 @@ print([r.codename for r in roster[:5]])
 ## What you should see
 
 - `status_report.py` prints `BOND — MISSION CONTROL`, `Packages: 27 total`,
-  and by-status/by-phase counts (all scaffolded / all brief on a fresh ledger).
-- The situation room shows all 27 slugs and, until gadgets are supplied, a
-  "No gadgets registered yet" note.
+  by-status/by-phase counts, and a `gates:` line naming where the status and
+  coverage numbers came from.  With `--no-gate-manifest` (or no manifest on
+  disk) that line reads `none applied — registry seed defaults`, and the
+  by-status counts are the seed's, not a measurement of the film packages.
+- The situation room shows all 27 slugs, a **Data provenance** block naming the
+  codename and measurement sources, and — until gadgets are supplied — a
+  "No gadgets registered yet" note.  Pass `--reconciled` (from
+  `scripts/reconcile.py --write`) to show film-declared codenames and
+  `--gate-manifest` to show measured coverage.
 - `.venv/` and `output/` are created locally and gitignored.

@@ -23,13 +23,16 @@ renders the whole fleet — packages, mission-timeline bars, coverage heat,
 suite layers, a per-film Q-branch gadget table, and the recent-transitions
 audit tail — into one self-contained HTML document.
 
-**Fleet state (this build):** {{REGISTRY_TOTAL}} packages tracked across
+**Roster state (this build):** {{REGISTRY_TOTAL}} packages tracked across
 {{REGISTRY_LAYER_COUNT}} declared topology layers;
 {{REGISTRY_SCAFFOLDED}} scaffolded, {{REGISTRY_BUILDING}} building,
 {{REGISTRY_READY}} ready, {{REGISTRY_RED}} red; {{REGISTRY_COVERAGE_KNOWN}}
 packages with measured coverage (mean {{REGISTRY_COVERAGE_MEAN}},
-{{REGISTRY_COVERAGE_AT_90}} at/above the 90% gate, {{REGISTRY_COVERAGE_UNKNOWN}}
-not yet gated); {{REGISTRY_BLOCKED_COUNT}} blocked;
-{{REGISTRY_STALE_COUNT}} stale.
+{{REGISTRY_COVERAGE_AT_90}} at/above the 90% gate,
+{{REGISTRY_COVERAGE_UNKNOWN}} without a gate result in this build);
+{{REGISTRY_BLOCKED_COUNT}} blocked; {{REGISTRY_STALE_COUNT}} stale.
+Provenance of those status and coverage figures:
+*{{REGISTRY_MEASUREMENT_SOURCE}}* — the registry's seed defaults are not a
+measurement of any film package; see the Results section.
 
 **Keywords:** {{CONFIG_KEYWORDS}}

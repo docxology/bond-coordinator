@@ -57,11 +57,6 @@ class TestRosterCompleteness:
             assert record.codename
             assert record.concepts
 
-    def test_all_records_start_scaffolded_without_measured_coverage(self) -> None:
-        for record in ROSTER:
-            assert record.status is PackageStatus.SCAFFOLDED
-            assert record.coverage is None
-
     def test_codenames_are_assigned_and_plot_anchored(self) -> None:
         by_slug = {record.slug: record for record in ROSTER}
         assert by_slug["goldfinger"].codename == "GRAND SLAM"
@@ -96,16 +91,24 @@ class TestRosterAccessors:
         with pytest.raises(KeyError):
             get_package("blofeld_unknown")
 
-    def test_find_by_status_all_scaffolded(self) -> None:
-        matches = find_by_status(PackageStatus.SCAFFOLDED)
-        assert len(matches) == 27
-        assert all(record.status is PackageStatus.SCAFFOLDED for record in matches)
+    def test_find_by_status_partitions_the_roster(self) -> None:
+        """Every row is returned by exactly one status query.
+
+        Asserts the accessor's behaviour rather than the seed's contents: a
+        test that pinned "all 27 are scaffolded" would pass no matter what
+        ``find_by_status`` did, and would go red the moment measured gate
+        output populated a row.
+        """
+        seen: list[str] = []
+        for status in PackageStatus:
+            matches = find_by_status(status)
+            assert all(record.status is status for record in matches)
+            seen.extend(record.slug for record in matches)
+        assert sorted(seen) == sorted(record.slug for record in ROSTER)
 
     def test_find_by_status_string_coercion(self) -> None:
-        assert len(find_by_status("ready")) == 0
-
-    def test_find_by_status_empty_ready(self) -> None:
-        assert find_by_status(PackageStatus.READY) == ()
+        assert find_by_status("ready") == find_by_status(PackageStatus.READY)
+        assert find_by_status("scaffolded") == find_by_status(PackageStatus.SCAFFOLDED)
 
 
 class TestSubsetRoster:

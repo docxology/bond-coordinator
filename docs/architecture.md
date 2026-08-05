@@ -10,6 +10,7 @@ src/bond_coordinator/   PURE CORE (stdlib + pyyaml; no infrastructure, no siblin
   ├── types.py               Asset, AssetKind, Gadget, GadgetRegistry, PackageStatus, MissionPhase
   ├── registry.py            PackageRecord, ROSTER (27), build_roster, get_package, find_by_status, subset_roster
   ├── reconcile.py           gadget_purpose, override_codenames, harvest_gadgets, reconcile_report
+  ├── gates.py               GateResult, parse_gate_manifest, apply_gate_results, measurement summaries
   ├── ledger.py              LedgerEntry, MissionLedger (transitions, validation, audit summaries, staleness, JSON)
   ├── status.py              CoverageSummary, BlockedPackage, LayerSummary, SUITE_LAYERS, SuiteStatus, build_status
   ├── situation.py           build_situation_room, write_situation_room
@@ -26,9 +27,18 @@ gracefully — see "Consuming the bond-api MissionProvider" below.
 ## Module responsibilities
 
 - **`registry.py`** — the authoritative 27-film ROSTER (canon order), the
-  `PackageRecord` shape, and lookup helpers.  Status/coverage are honest
-  (currently all `scaffolded`/`None`); they change only from measured gate
-  output.
+  `PackageRecord` shape, and lookup helpers.  The shipped literal carries
+  `scaffolded`/`None` for every row: a *seed default* meaning "unmeasured by
+  this process", not a claim about any film package.  Rows acquire a status or
+  coverage number only through `gates.apply_gate_results`.
+- **`gates.py`** — the measurement boundary.  `parse_gate_manifest` decodes the
+  `bond-ops` aggregate (raising on a malformed manifest rather than degrading
+  to "nothing measured", which is indistinguishable from an honest seed), and
+  `apply_gate_results` derives each row's status by rule: failed run → `red`,
+  passing at/above `COVERAGE_FLOOR` → `ready`, passing below → `building`, no
+  gate row → left at the seed.  `measurement_summary` / `measured_row_summary`
+  produce the provenance sentence the dashboard, the status report, and the
+  manuscript token all print.
 - **`reconcile.py`** — pure merge of real films' codenames + gadget tables
   over the provisional registry (`override_codenames`, `harvest_gadgets`);
   refresh/replace semantics, inputs immutable.  Also owns `gadget_purpose`,
