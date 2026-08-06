@@ -33,6 +33,7 @@ reordering:
 | `05_experimental_setup.md` | Experimental Setup | `{#sec:experimental_setup}` |
 | `06_reproducibility.md` | Reproducibility Certification | `{#sec:reproducibility}` |
 | `07_scope_and_related_work.md` | Scope, Related Work, and Positioning | `{#sec:scope}` |
+| `08_limitations_and_uncertainty.md` | Limitations and Uncertainty | `{#sec:limitations}` |
 | `99_references.md` | References | `{#sec:references}` |
 
 ## `{{TOKEN}}` Reference

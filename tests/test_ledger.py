@@ -108,6 +108,11 @@ class TestTransitions:
         with pytest.raises(KeyError):
             fresh_ledger.advance("not_a_film", "agent-007", "0.1.0")
 
+    def test_transition_with_invalid_jump_intent_raises(self, fresh_ledger) -> None:
+        """The defensive jump guard is reachable and loud, not dead code."""
+        with pytest.raises(ValueError, match="invalid jump"):
+            fresh_ledger._transition("goldfinger", "agent-007", "0.1.0", None, jump=7)
+
     def test_clock_is_used_for_timestamps(self, fresh_ledger, fixed_clock) -> None:
         entry = fresh_ledger.advance("dr_no", "agent-007", "0.1.0")
         assert entry.updated_at == fixed_clock()

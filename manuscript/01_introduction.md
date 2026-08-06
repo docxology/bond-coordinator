@@ -54,4 +54,6 @@ mocking, and is exercised by a zero-mock real-data test suite.
 - [@sec:experimental_setup] documents the configuration surface and the
   enforced quality gates.
 - [@sec:reproducibility] certifies determinism and provenance.
+- [@sec:limitations] states honestly what every figure here does and does not
+  certify, and how the seeded-versus-measured distinction can be misread.
 - [@sec:scope] scopes the package and relates it to the rest of the fleet.

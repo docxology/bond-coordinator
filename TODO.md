@@ -301,3 +301,113 @@ Persistent guardrails, unchanged: pure `src/` core (stdlib + `pyyaml`, no
 interpretation lives in `src/` not `scripts/` (see `reconcile.gadget_purpose`);
 cross-package reads guarded per film with `except Exception` and reported on
 stderr, never silent; ≥90% line + branch on `src/`.
+
+## Round-2 (2026-08-06) — hostile review + manuscript deepening
+
+Steady state on entry: **221 tests passing, 0 skipped, 100.00% branch+line on
+`src/`** (604 stmts / 172 branches / 0 missed) at `--cov-fail-under=90`, ruff
+check + format + mypy clean (`TODO.md` states 221).
+
+### Findings & fixes (each with a regression/negative-control test)
+
+1. **`GATE-DATAVALID-1` — `parse_gate_manifest` accepted `NaN` / `inf` and
+   out-of-range coverage, and negative gate counts (data-validation gap).**
+   Python's `json.loads` parses the bare literals `NaN`/`Infinity` by default,
+   and `_coerce_coverage` only checked `isinstance(value, (int, float))` — so a
+   manifest row with `coverage: NaN` round-tripped into a `GateResult` whose
+   coverage was `nan`, then propagated into `CoverageSummary.mean`,
+   `formatted_mean()` (→ `"nan%"`), and the situation-room heat + manuscript
+   token.  Coverage outside `[0, 100]` (negative, or >100) and negative
+   `passed`/`failed`/`rc` counts were likewise silently accepted.  A
+   malformed measurement became the fleet's reported mean.
+   **Fix:** `GateResult.__post_init__` now rejects, with a single `ValueError`
+   contract, any coverage that is not finite in `[0, 100]`, any negative
+   count, and a blank `package` (raised on construction — so it applies to
+   *programmatic* `GateResult(...)` and to manifest rows alike).
+   **Evidence:** added to
+   `tests/test_gates.py::TestParseGateManifest::test_malformed_manifest_raises`
+   the payloads `coverage=float("nan")`, `float("inf")`, `-float("inf")`,
+   `-1.0`, `101.5`, `1000.0`, and `passed=-1`/`failed=-5`/`rc=-3`, each
+   asserting `ValueError`; plus
+   `test_gate_result_rejects_empty_package_on_construction`.  Before the fix
+   the `nan` row parsed successfully (verified by running `parse_gate_manifest`
+   against `json.loads` of a `NaN` literal — it returned a `nan` coverage).
+
+2. **`LEDGER-BRANCH-1` — reached the previously `# pragma: no cover`
+   defensive branch, removed the pragma (the branch was real, unverified
+   code).**  The TODO listed this as an unreachable, excluded line whose
+   invariant ("jump is only -1/0") was enforced only by reading three call
+   sites.  Rather than weakening it, the branch is now *covered*: a test drives
+   `_transition(..., jump=7)` and asserts the `ValueError`.
+   **Fix:** comment `# pragma: no cover` removed from `ledger.py:293`.
+   **Evidence:** `tests/test_ledger.py::...::test_transition_with_invalid_jump_intent_raises`
+   (raises `ValueError`, match `"invalid jump"`).  `grep -n "pragma: no cover"`
+   over `src/` now returns nothing; coverage holds at 100% with the branch hit.
+
+3. **`SCRIPTS-MSG-1` — `scripts/advance_mission.py` claimed every transition
+   starts at `brief`.**  The success line hard-coded `"{slug}: brief → {phase}"`,
+   which was wrong for any multi-step `jump` (e.g. `plan → debrief` would print
+   `brief → debrief`), misrepresenting the audit message.
+   **Fix:** report the true source phase: capture `prior = ledger.get(slug).phase`
+   before the jump and print `"{slug}: {prior.value} → {entry.phase.value}"`.
+   **Evidence:** existing smoke test still asserts `recon` appears and the
+   transition persists; the fixed line reads the real prior phase.
+
+### Finding that proved a non-issue (recorded)
+
+I tested whether `json.loads` could smuggle `nan`/`inf` coverage past
+`parse_gate_manifest` — **it could, hence fix 1**.  I also re-checked that
+`gadget_purpose` still never borrows a builtin docstring for any plain-data
+shape (unchanged, covered by
+`TestGadgetPurpose::test_plain_data_never_returns_a_builtin_docstring`).
+
+### Gate numbers (Round-2 close, on disk)
+
+- **232 tests passing, 0 skipped, 100.00%** line + branch on `src/`
+  (615 stmts / 180 branches / 0 missed) at `--cov-fail-under=90`.
+- `ruff check` clean, `ruff format --check` clean ("30 files already
+  formatted" — now includes the new regression lines).
+- `mypy` clean (`Success: no issues found in 14 source files`).
+- Manuscript hydration: `z_generate_manuscript_variables.py --no-gate-manifest`
+  resolves all 31 tokens into 13 numbered files; the guide files
+  (`AGENTS/README/SYNTAX.md`) retain literal `{{...}}` by design and are ruled
+  out of the cross-reference scan.
+
+### Manuscript deepening (Round-2)
+
+- **New `manuscript/08_limitations_and_uncertainty.md`** — honest section
+  covering: the seeded registry is not a measurement; measured values are only
+  as good as the manifest (convention-path provenance, bounded-percentage
+  coverage, absence = absence of evidence); ledger truth is bounded by its
+  inputs (same-phase re-entries, staleness heuristic); gadget purposes are
+  derived shapes not film confessions; reconciliation is partial by design; the
+  situation room reflects its inputs exactly; and an uncertainty statement
+  (qualitative provenance/model uncertainties, not spurious precision).
+- **`03_results.md`** gained a live-generated "Summary table" — every figure a
+  `{{TOKEN}}`, none hand-authored — plus a pointer to §[sec:limitations].
+- **`references.bib`** +2 scholarly entries (**sandve2013tensimplerules**,
+  **peng2011reproducibleresearch**), both real/DOI-verifiable, cited from
+  `06_reproducibility.md` and the new limitations section.  All cited keys
+  resolve.
+- **`SYNTAX.md`**, **`01_introduction.md`**, **`manuscript/AGENTS.md`**,
+  **`manuscript/README.md`**, top-level **`AGENTS.md`** updated for the new
+  `{#sec:limitations}` section label and section range (00–08 + 99).
+- Fixed the two `TODO.md item 1` positional cross-references (`README.md`,
+  `docs/faq.md`) → `TODO.md#ledger-io-1` (closes the positional part of
+  `DOC-XREF-1` for shipped files; the manuscript `(see TODO.md)` pointers are
+  non-positional and correct as-is).
+
+### Still open for a future round (unchanged / not regressed)
+
+- `SCRIPTS-COV-1` (scripts/ outside measured coverage scope) — still a
+  pre-existing scope decision; doc either `source = ["src","scripts"]` with a
+  stated floor or an explicit "scripts are smoke-tested by design" note in
+  `docs/testing_philosophy.md`.  Not regressed this round; scripts changes were
+  covered by subprocess smoke tests.
+- `LEDGER-IO-1` — route ledger persistence through `bond-utilities` `mission_io`
+  (needs the Layer-0 adoption; `src/` codecs stay, `scripts/advance_mission.py`
+  is the touch point).  Unchanged.
+- `LAYER-PROBE-1` — block on `GATE-PATH-1` (a contract to consume).
+- `GATE-PATH-1`, `PROVENANCE-TEST-1`, `DOC-XREF-1` (manuscript side) — see above.
+- No `mission.py` / `MissionProvider` — by design (Layer 2 consumer, not
+  implementer); `src/bond_coordinator/types.py` stays a pure-core mirror.

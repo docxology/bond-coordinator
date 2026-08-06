@@ -60,6 +60,9 @@ def main(argv: list[str] | None = None) -> int:
 
     roster = build_roster()
     ledger = _load_or_create(args.ledger, roster)
+    # Report the *actual* source phase of the move (a jump can come from any
+    # later phase — the message must not claim every move starts at brief).
+    prior = ledger.get(args.slug).phase
     try:
         entry = ledger.jump(
             args.slug, args.phase, args.by, args.version, note=args.note
@@ -71,7 +74,8 @@ def main(argv: list[str] | None = None) -> int:
     args.ledger.parent.mkdir(parents=True, exist_ok=True)
     args.ledger.write_text(ledger.to_json(), encoding="utf-8")
     print(
-        f"{entry.slug}: brief → {entry.phase.value}  (by {entry.updated_by} @ {entry.version})"
+        f"{entry.slug}: {prior.value} → {entry.phase.value}  "
+        f"(by {entry.updated_by} @ {entry.version})"
     )
     return 0
 

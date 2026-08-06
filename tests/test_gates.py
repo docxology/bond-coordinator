@@ -76,6 +76,11 @@ class TestParseGateManifest:
         results = parse_gate_manifest(json.loads(path.read_text(encoding="utf-8")))
         assert results["dr_no"].coverage == 98.0
 
+    def test_gate_result_rejects_empty_package_on_construction(self) -> None:
+        """The dataclass invariant holds even for direct construction."""
+        with pytest.raises(ValueError, match="non-empty"):
+            GateResult("   ", 90.0, 1, 0, 0, "ok")
+
     def test_missing_coverage_is_unknown_not_zero(self) -> None:
         results = parse_gate_manifest([_row("dr_no", coverage=None)])
         assert results["dr_no"].coverage is None
@@ -99,9 +104,18 @@ class TestParseGateManifest:
             [["not", "a", "mapping"]],
             [_row("dr_no", coverage="high")],
             [_row("dr_no", coverage=True)],
+            [_row("dr_no", coverage=float("nan"))],
+            [_row("dr_no", coverage=float("inf"))],
+            [_row("dr_no", coverage=-float("inf"))],
+            [_row("dr_no", coverage=-1.0)],
+            [_row("dr_no", coverage=101.5)],
+            [_row("dr_no", coverage=1000.0)],
             [_row("dr_no", passed="many")],
+            [_row("dr_no", passed=-1)],
             [_row("dr_no", failed=True)],
+            [_row("dr_no", failed=-5)],
             [_row("dr_no", rc=None)],
+            [_row("dr_no", rc=-3)],
         ],
     )
     def test_malformed_manifest_raises(self, payload: object) -> None:

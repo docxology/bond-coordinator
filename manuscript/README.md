@@ -4,7 +4,7 @@ Publication-shaped manuscript for `bond-coordinator`.
 
 - `config.yaml` — identity (`BOND-COORDINATOR`, codename `MISSION CONTROL`),
   authors, keywords. Loaded by `src/bond_coordinator/manuscript_variables.py`.
-- `00_abstract.md` … `07_scope_and_related_work.md` — numbered sections with
+- `00_abstract.md` … `08_limitations_and_uncertainty.md` — numbered sections with
   `{{TOKEN}}` injection (fleet counts are never hand-authored).
 - `99_references.md` + `references.bib` — bibliography (rendered by the
   pipeline via `--natbib`).

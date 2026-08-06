@@ -1,7 +1,9 @@
 # Reproducibility Certification {#sec:reproducibility}
 
 Reproducibility is a first-order requirement for mission control, because the
-suite's provenance story depends on it.
+suite's provenance story depends on it.  The certification below follows the
+reproducibility-in-computational-research guidance of
+[@sandve2013tensimplerules; @peng2011reproducibleresearch].
 
 ## Determinism
 

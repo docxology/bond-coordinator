@@ -107,7 +107,7 @@ sibling never aborts a fleet-wide run.  Full contract and degradation table:
   module is the fleet's provenance-record convention). This package does **not
   use `mission_io` yet**: `MissionLedger`'s JSON codecs and
   `scripts/advance_mission.py` are still local stdlib equivalents, and routing
-  them through Layer 0 is open work (`TODO.md` item 1). The pure core imports
+  them through Layer 0 is open work (see `TODO.md#ledger-io-1`). The pure core imports
   neither sibling by design: it ships its own protocol mirror
   (`src/bond_coordinator/types.py`) to keep `src/` sibling-free.
 

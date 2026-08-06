@@ -15,9 +15,9 @@ This file covers manuscript-specific editing for the coordinator.
 |---|---|
 | `config.yaml` | Identity (`paper:`, `mission.codename`, `keywords`) + author metadata. Loaded by `../src/bond_coordinator/manuscript_variables.py`. |
 | `config.yaml.example` | Copy-and-customize reference. |
-| `00_abstract.md` … `07_scope_and_related_work.md` | Numbered sections, `{{TOKEN}}` injection. |
+| `00_abstract.md` … `08_limitations_and_uncertainty.md` | Numbered sections, `{{TOKEN}}` injection. |
 | `99_references.md` | References section (rendered from `references.bib`). |
-| `references.bib` | Bibliography (5 scholarly entries). |
+| `references.bib` | Bibliography (8 scholarly entries). |
 | `SYNTAX.md` | Section labels + `{{TOKEN}}` table + citation syntax. |
 | `preamble.md` | LaTeX preamble injected at render time. |
 | `layer_contract.yaml` | Declares the pure-core boundary (`allow_infrastructure_imports: []`). |

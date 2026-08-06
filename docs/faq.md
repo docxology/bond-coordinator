@@ -58,7 +58,7 @@ orchestrator, which converts them to plain data first.  The mirror is a
 boundary, not a placeholder.  `bond-utilities` (Layer 0) **is built** too — its
 `mission_io` module holds the fleet's provenance-record conventions — but this
 package has not adopted it: the ledger still uses local stdlib JSON codecs, and
-routing it through Layer 0 is open work (see `TODO.md` item 1).
+routing it through Layer 0 is open work (see `TODO.md#ledger-io-1`).
 
 ## The status report says `dependency_ready: false`. Is bond-api missing?
 

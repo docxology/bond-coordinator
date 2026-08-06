@@ -81,7 +81,7 @@ tests/
     conftest.py             5-film deterministic fixture + fixed clock
     test_registry.py test_ledger.py test_status.py test_situation.py test_reconcile.py test_gates.py
     test_manuscript_variables.py test_scripts_smoke.py
-manuscript/                 config.yaml identity + 9 numbered sections (00-07, 99_references) with {{TOKEN}} injection
+manuscript/                 config.yaml identity + 10 numbered sections (00-08, 99_references) with {{TOKEN}} injection
 docs/                       agent-facing rulebook (read-first: agent_instructions.md)
 output/                     gitignored generated artifacts (indicative only)
 ```

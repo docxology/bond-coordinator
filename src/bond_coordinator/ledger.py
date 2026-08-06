@@ -290,7 +290,7 @@ class MissionLedger:
             desired_index = current_index  # touch: same phase
         elif jump == 0:
             desired_index = current_index + 1  # advance: exactly one step
-        else:  # pragma: no cover — defensive; jump is only 0/-1 from public API
+        else:  # defensive; only reachable when a caller passes an invalid jump
             raise ValueError(f"invalid jump {jump!r}")
 
         _require_forward(slug, current.phase, desired_index)

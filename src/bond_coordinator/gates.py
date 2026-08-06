@@ -25,10 +25,17 @@ Status derivation is a *rule*, not a hand-assertion:
 * a passing row at or above the coverage floor is ``ready``;
 * a passing row below the floor — or one that reports no coverage number at
   all — is ``building``.
+
+Coverage is treated as a *bounded measurement*, not an arbitrary float: only a
+finite value in ``[0, 100]`` percent is a valid coverage, and the test/exit
+counts must be non-negative.  A row that violates this is rejected loudly by
+:func:`parse_gate_manifest` (a ``ValueError``), never coerced or silently
+clamped — a malformed measurement must not become the fleet's ``mean``.
 """
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 
@@ -49,6 +56,11 @@ __all__ = [
 #: never disagree about what "unmeasured" looks like.
 UNMEASURED_SUMMARY = "none — registry seed defaults (status/coverage unmeasured)"
 
+#: Lower bound of a valid coverage percentage.
+MIN_COVERAGE = 0.0
+#: Upper bound of a valid coverage percentage (a percentage cannot exceed 100).
+MAX_COVERAGE = 100.0
+
 
 @dataclass(frozen=True)
 class GateResult:
@@ -60,6 +72,33 @@ class GateResult:
     failed: int
     returncode: int
     verdict: str
+
+    def __post_init__(self) -> None:
+        """Validate the outcome in place (frozen dataclass: raises, no mutation).
+
+        Coverage must be a finite percentage in ``[0, 100]`` or ``None``;
+        counts are non-negative.  This runs on construction via
+        :func:`parse_gate_manifest` *and* on any programmatic construction,
+        so no ``GateResult`` with ``nan``/``inf``/out-of-range coverage or a
+        negative count can ever flow into ``apply_gate_results``.
+        """
+        if self.coverage is not None and not (
+            MIN_COVERAGE <= self.coverage <= MAX_COVERAGE
+            and math.isfinite(self.coverage)
+        ):
+            # ValueError (not TypeError): a single exception contract for every
+            # data-validity problem a caller may hit.
+            raise ValueError(
+                f"gate row coverage must be a finite percentage in "
+                f"[{MIN_COVERAGE:.0f}, {MAX_COVERAGE:.0f}], got {self.coverage!r}"
+            )
+        if self.passed < 0 or self.failed < 0 or self.returncode < 0:
+            raise ValueError(
+                f"gate row counts must be non-negative (passed={self.passed}, "
+                f"failed={self.failed}, rc={self.returncode})"
+            )
+        if not self.package.strip():
+            raise ValueError("gate row package must be a non-empty string")
 
     @property
     def ok(self) -> bool:
@@ -95,7 +134,9 @@ def parse_gate_manifest(payload: object) -> dict[str, GateResult]:
     row that is not a mapping, for a row with no ``package`` key, and for a row
     whose numeric fields are not numbers — a malformed manifest must be loud,
     because silently parsing to ``{}`` would report the whole fleet as
-    unmeasured and look exactly like an honest seed state.
+    unmeasured and look exactly like an honest seed state.  Range/sanity
+    validation (finite coverage in ``[0, 100]``, non-negative counts) is
+    applied in :class:`GateResult.__post_init__`.
     """
     if isinstance(payload, Mapping):
         rows: object = payload.get("packages")

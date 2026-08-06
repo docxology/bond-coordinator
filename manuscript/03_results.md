@@ -87,3 +87,26 @@ whose audit trail holds {{LEDGER_TRANSITION_TOTAL}} entries (one per
 registered package).  Coverage heat, mission-timeline bars, per-film
 gadget grouping, and the recent-transitions table are all rendered
 deterministically and asserted byte-identical across repeated builds.
+
+## Summary table (live-generated)
+
+Every figure below is injected from the registry/ledger by
+`src/bond_coordinator/manuscript_variables.py` — none is hand-authored.
+
+| Metric | Value |
+|---|---|
+| Tracked film packages | {{REGISTRY_TOTAL}} |
+| Declared suite-topology layers | {{REGISTRY_LAYER_COUNT}} |
+| Mission-infrastructure packages (non-films layers) | {{REGISTRY_INFRA_PACKAGE_COUNT}} |
+| Lifecycle phases | {{LEDGER_PHASE_COUNT}} |
+| Enforced coverage floor | {{GATE_COVERAGE_FLOOR}} |
+| Default staleness threshold | {{GATE_STALE_DAYS}} days |
+| Roster span | `{{REGISTRY_FIRST_SLUG}}` ({{REGISTRY_FIRST_YEAR}}) → `{{REGISTRY_LAST_SLUG}}` ({{REGISTRY_LAST_YEAR}}) |
+| Measured coverage (known / at-or-above floor / mean) | {{REGISTRY_COVERAGE_KNOWN}} / {{REGISTRY_COVERAGE_AT_90}} / {{REGISTRY_COVERAGE_MEAN}} |
+| Status counts (scaffolded / building / ready / red) | {{REGISTRY_SCAFFOLDED}} / {{REGISTRY_BUILDING}} / {{REGISTRY_READY}} / {{REGISTRY_RED}} |
+| Blocked / stale packages | {{REGISTRY_BLOCKED_COUNT}} / {{REGISTRY_STALE_COUNT}} |
+| Audit-trail entries (fresh ledger) | {{LEDGER_TRANSITION_TOTAL}} |
+
+Provenance of the status and coverage columns:
+*{{REGISTRY_MEASUREMENT_SOURCE}}* — read the Limitations section
+(§[sec:limitations]) before interpreting them as claims about any film.
