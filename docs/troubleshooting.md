@@ -22,7 +22,9 @@ use `touch` (or `jump` to the same phase).
 
 A persisted `output/data/mission_ledger.json` is corrupt or from a different
 roster.  Regenerate: delete the file (it is disposable) and re-run
-`scripts/advance_mission.py`, or rebuild with `scripts/status_report.py`.
+`scripts/advance_mission.py`, which rewrites it from the registry.  The
+reporting scripts (`status_report.py`, `build_situation_room.py`) only read that
+file — they never rebuild it.
 
 ## Situation room shows "No gadgets registered yet"
 

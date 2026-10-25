@@ -26,7 +26,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-REPO = Path(__file__).resolve().parents[2]  # -> projects/working/bond
+REPO = Path(__file__).resolve().parents[2]  # -> fleet root (sibling repos)
 sys.path.insert(0, str(REPO / "bond-coordinator" / "src"))
 
 from bond_coordinator import build_roster

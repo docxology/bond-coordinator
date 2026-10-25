@@ -26,10 +26,12 @@ tree before deleting it.
 
 ## Open work
 
-Seven items.  Five carry over from
+Six items.  Five carry over from
 `../output/verify/bond-coordinator.unresolved.json` (the audit findings the
-remediation pass could **not** close); one (`LEDGER-BRANCH-1`) predates it; one
-(`DOC-XREF-1`) was noticed while writing this file.
+remediation pass could **not** close); one (`LEDGER-BRANCH-1`) predates them.
+(`DOC-XREF-1` — the positional `TODO.md item 1` cross-references — is closed
+and deleted: `README.md`, `docs/faq.md`, and `src/bond_coordinator/ledger.py`
+now cite `TODO.md#ledger-io-1`.)
 
 ### Correctness
 
@@ -156,32 +158,6 @@ intent directly, removing the pragma.
 uv run pytest tests/ --cov=src --cov-report=term-missing --cov-fail-under=100
 ```
 
-### Documentation
-
-#### `DOC-XREF-1` — four files cite TODO items by position, which this rewrite already invalidated
-
-**Wrong:** these cross-references point at "`TODO.md` item 1", a positional
-label with no anchor in the file it cites:
-
-- `README.md:110` — "routing them through Layer 0 is open work (`TODO.md` item 1)"
-- `docs/faq.md:61` — "routing it through Layer 0 is open work (see `TODO.md` item 1)"
-- `docs/architecture.md:120` — "`bond-api` is built (see `TODO.md`)"
-- `manuscript/07_scope_and_related_work.md:58` and `manuscript/01_introduction.md:45` — "(see `TODO.md`)"
-
-The first two are now stale: this file has no numbered item 1.  The intended
-target is `LEDGER-IO-1` below.  (Fixing the two manuscript references requires
-editing manuscript prose, which is out of scope for this pass — record only.)
-
-**Done looks like:** `README.md` and `docs/faq.md` cite `TODO.md#ledger-io-1`
-(or the bare ID `LEDGER-IO-1`), and no shipped file refers to a TODO item by
-ordinal position.
-
-**Demonstrate:**
-
-```bash
-! grep -rn "TODO.md. item [0-9]" README.md AGENTS.md docs/ manuscript/
-```
-
 ### Extension
 
 #### `LEDGER-IO-1` — route ledger provenance through `bond-utilities` `mission_io`
@@ -268,8 +244,10 @@ uv run python scripts/status_report.py --json \
 - **`scripts/` are thin orchestrators verified by subprocess smoke tests.**
   Accepted today; `SCRIPTS-COV-1` exists to make that either measured or
   explicitly stated, not to relitigate the pattern.
-- **Local-only working tree.**  There is no remote and nothing is ever pushed;
-  commits are path-scoped inside this package.
+- **Standalone repository, independent gates.**  The coordinator has its own
+  `origin` (`docxology/bond-coordinator`, default branch `main`) and its own
+  `uv.lock`; it is not a member of a shared `uv` workspace, so every gate below
+  runs from this directory and resolves its siblings by path.
 
 ## Verification
 
@@ -279,8 +257,9 @@ directory (it is not a member of the template `uv` workspace).
 ```bash
 uv sync --extra dev
 
-# 1. Suite + coverage gate — expect: 221 passed, 100.00%, "Required test
-#    coverage of 90% reached."
+# 1. Suite + coverage gate — expect: 232 tests (231 passed; the real-films CLI
+#    test skips when no slug-named fleet sibling is checked out), 100.00%,
+#    "Required test coverage of 90% reached."
 uv run pytest tests/ --cov=src --cov-fail-under=90
 
 # 2. Lint — expect: "All checks passed!"

@@ -5,7 +5,7 @@
 ## 1. Install
 
 ```bash
-cd projects/working/bond/bond-coordinator
+# from this repository's root
 uv sync --extra dev
 ```
 
@@ -48,7 +48,7 @@ print([r.codename for r in roster[:5]])
 
 ## What you should see
 
-- `status_report.py` prints `BOND — MISSION CONTROL`, `Packages: 27 total`,
+- `status_report.py` prints `PROJECT BOND — MISSION CONTROL`, `Packages: 27 total`,
   by-status/by-phase counts, and a `gates:` line naming where the status and
   coverage numbers came from.  With `--no-gate-manifest` (or no manifest on
   disk) that line reads `none applied — registry seed defaults`, and the

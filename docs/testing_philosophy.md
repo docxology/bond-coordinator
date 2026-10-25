@@ -29,6 +29,7 @@ canon ordering.
 |---|---|
 | `conftest.py` | path setup, fixtures (`sample_roster`, `fixed_clock`, `sample_gadgets`, `aged_ledger`) |
 | `test_registry.py` | 27-film ROSTER completeness, accessors, `subset_roster`, `GadgetRegistry` incl. constructor seeding + duplicate/missing errors |
+| `test_gates.py` | `parse_gate_manifest` (loud failure on malformed input), `apply_gate_results` status/coverage derivation, measurement summaries |
 | `test_ledger.py` | lifecycle transitions (forward, touch, jump, backwards/past-debrief errors), identity validation, audit trail + summaries, staleness, JSON round-trip + malformed/unknown-package errors |
 | `test_status.py` | fresh vs. mixed fleets, coverage summary, every blocked rule, stale flags, the applied `stale_days` threshold, per-layer summaries, count helpers |
 | `test_situation.py` | HTML structure, every slug/film/codename, gadget rendering + escaping, coverage heat, timeline bars, layers section (present **and** absent), stale-threshold text, dependency-probe wording, byte-determinism, file write |

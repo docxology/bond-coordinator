@@ -6,15 +6,17 @@
       "orcid": "0000-0001-6232-9096"
     }
   ],
-  "description": "Source code for Convergence Analysis of Gradient Descent Optimization (2026).",
+  "description": "Source code for BOND-COORDINATOR (MISSION CONTROL), the Layer-2 registry and situation room for the BOND suite: film-package registry, mission-state ledger, aggregate suite status, and a self-contained situation-room dashboard.",
   "keywords": [
-    "optimization algorithms",
-    "gradient descent",
-    "convergence analysis",
-    "numerical methods",
-    "mathematical programming",
-    "reproducible research",
-    "infrastructure automation"
+    "mission control",
+    "film-package registry",
+    "mission-state ledger",
+    "append-only audit trail",
+    "registry reconciliation",
+    "suite status",
+    "software fleet",
+    "fault isolation",
+    "reproducible research"
   ],
   "license": "MIT",
   "related_identifiers": [
@@ -24,7 +26,7 @@
       "scheme": "doi"
     }
   ],
-  "title": "Convergence Analysis of Gradient Descent Optimization",
+  "title": "BOND-COORDINATOR",
   "upload_type": "software",
-  "version": "2.5.2"
+  "version": "0.1.0"
 }

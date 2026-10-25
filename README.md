@@ -114,8 +114,8 @@ sibling never aborts a fleet-wide run.  Full contract and degradation table:
 ## Repository layout
 
 ```
-src/bond_coordinator/   pure core (types, registry, reconcile, ledger, status, situation,
-                        manuscript_variables)
+src/bond_coordinator/   pure core (types, registry, gates, reconcile, ledger, status,
+                        situation, manuscript_variables)
 scripts/                thin orchestrators (status_report, reconcile, advance_mission,
                         build_situation_room, z_generate_manuscript_variables)
 tests/                  zero-mock real-data suite; deterministic 5-film fixture (tests/conftest.py)

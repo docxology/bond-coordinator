@@ -107,7 +107,7 @@ class GadgetRegistry:
 class PackageStatus(str, Enum):
     """Lifecycle status of a film package in the suite registry.
 
-    Mirrors the ROSTER conventions in ``SCOPE.md`` §2.1 / the quality
+    Mirrors the ROSTER conventions in :mod:`bond_coordinator.registry` / the quality
     guardrails: a package is ``scaffolded``, ``building``, ``ready``, or
     ``red`` (gate failures / blocked).
     """

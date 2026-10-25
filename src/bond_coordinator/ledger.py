@@ -9,7 +9,7 @@ serialization (:meth:`MissionLedger.to_json` / :meth:`MissionLedger.from_json`)
 is provided for provenance persistence by thin orchestrators
 (``scripts/advance_mission.py``).  It is a local stdlib equivalent of the
 conventions ``bond-utilities`` ``mission_io`` already provides — that package
-is built; this one has simply not adopted it yet (see ``TODO.md`` item 1).
+is built; this one has simply not adopted it yet (see ``TODO.md#ledger-io-1``).
 """
 
 from __future__ import annotations

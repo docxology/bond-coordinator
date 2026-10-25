@@ -5,6 +5,8 @@ Zero-mock, deterministic test suite for `bond-coordinator`.
 ```
 conftest.py                  path setup + 5-film fixture + fixed clock
 test_registry.py             ROSTER completeness, accessors, GadgetRegistry
+test_gates.py                gate-manifest parsing + measured status/coverage rules
+test_reconcile.py            codename/gadget merge rules, gadget_purpose, CLI smoke
 test_ledger.py               lifecycle transitions, audit, staleness, JSON
 test_status.py               aggregation, coverage summary, stale/blocked
 test_situation.py            situation-room HTML, escaping, determinism

@@ -30,9 +30,11 @@ After changing, re-run the gate with `--cov-report=term-missing` and fix gaps â€
 ## Rule 3: The Layer Boundary â€” pure `src/`, thin `scripts/`
 
 **`src/bond_coordinator/`** is pure: standard library + `pyyaml` only.  No
-`infrastructure.*`, no sibling BOND imports, no filesystem side-effects
-(`MissionLedger` JSON methods are pure codecs; only `scripts/` calls them on
-real files).
+`infrastructure.*`, no sibling BOND imports, and no filesystem side-effects
+beyond the two explicit writers `situation.write_situation_room` and
+`manuscript_variables.resolve_manuscript_tree`, which write only to the path
+their caller passes (`MissionLedger` JSON methods are pure codecs; `scripts/`
+calls them on real files).
 
 **`scripts/*.py`** orchestrates: argv parsing, file I/O, `bond_api` provider
 discovery + availability probing, and calls into `src/`.
@@ -68,7 +70,9 @@ module".
 
 - All time-dependent paths accept an injectable clock (`now`, `now_fn`); tests
   pin a fixed UTC reference.
-- No wall-clock tokens in generated artifacts.
+- Generated artifacts carry exactly one wall-clock field, `generated_at`
+  (`status.build_status` / the situation room); pin the clock in tests and the
+  bytes are stable.
 - No random reliance: `tests/conftest.py` seeds everything from fixed data.
 
 ## Rule 6: Style and Syntax Guides Govern Their Domains

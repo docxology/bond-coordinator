@@ -1,7 +1,9 @@
 """Authoritative registry of the BOND suite's 27 film packages.
 
-Seeded from the ROSTER conventions in ``projects/working/bond/SCOPE.md``
-§2.1 (film, year, core concepts) plus coordinator-assigned mission codenames.
+Seeded from the BOND fleet roster conventions (film, year, core concepts)
+plus coordinator-assigned mission codenames.  This literal is the authority for
+the 27-film roster; the fleet-level ``SCOPE.md`` document is not shipped with
+this package.
 
 Codename policy
 ---------------
@@ -76,7 +78,7 @@ def _record(
 
 
 #: The 27 film packages, in Eon-canon order (1–25) then non-Eon (26–27),
-#: exactly per SCOPE.md §2.1.
+#: exactly per the fleet roster conventions.
 ROSTER: tuple[PackageRecord, ...] = (
     _record(
         1,

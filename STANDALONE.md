@@ -6,7 +6,7 @@
 ## Publication identity
 
 - Standalone repository: [docxology/bond-coordinator](https://github.com/docxology/bond-coordinator)
-- Config version: `2.5.2`
+- Config version: `0.1.0`
 - Stable concept DOI: [10.5281/zenodo.20417136](https://doi.org/10.5281/zenodo.20417136)
 - Latest deposited version DOI: [10.5281/zenodo.20931934](https://zenodo.org/records/20931934)
 - Additional declared locations: [github_pages](https://docxology.github.io/bond-coordinator/), [huggingface_hub](https://huggingface.co/datasets/ActiveInference/bond-coordinator), [ipfs_pinata](https://gateway.pinata.cloud/ipfs/QmSVZF1MisqWeX1C7vFUhcwCkYvZXBuq5TS9MzLFNJJykS), [netlify](https://6a4440a789b44ad53f3af09b--tranquil-kleicha-0c9203.netlify.app), [osf](https://osf.io/mcv8j/), [pypi](https://test.pypi.org/project/bond-coordinator/2.5.2/), [software_heritage](https://archive.softwareheritage.org/browse/origin/?origin_url=https://github.com/docxology/bond-coordinator)
@@ -16,20 +16,29 @@ Additional locations are config-declared publication evidence; the central index
 
 <!-- END:PUBLICATION_INDEX -->
 
+The index above is inherited from the template workspace — its generator,
+`scripts/docgen/publication_records.py`, is not part of this standalone repo —
+and it has not been re-verified for this package: the `pypi` location names
+version `2.5.2` while this package is `0.1.0`, and the `github_pages` (404),
+`huggingface_hub` (401), and Zenodo (403) locations do not resolve
+unauthenticated.  Treat them as unverified until the index is regenerated.
+
 ## Purpose
 
-`bond-coordinator` is the canonical code-driven research exemplar: tested
-source modules, deterministic analysis scripts, generated figures, manuscript
-variables, and publication-ready metadata.
+`bond-coordinator` is the Layer-2 registry and situation room for the BOND
+suite: tested pure-core modules, deterministic status/situation-room
+scripts, injected manuscript variables, and publication-ready metadata.  It
+implements no film's algorithms.
 
 ## Copy This When
 
-Use it for computational research where claims should trace to source code,
-analysis outputs, figures, and project-local tests.
+Use it for fleet-level research where claims should trace to source code,
+generated status artifacts, and project-local tests.
 
 ## Clean Copy Command
 
-From the template repository root:
+`scripts/audit/copy_exemplar.py` ships with the template repository (it is
+not part of this standalone repo); from that template root:
 
 ```bash
 uv run python scripts/audit/copy_exemplar.py \
@@ -38,50 +47,46 @@ uv run python scripts/audit/copy_exemplar.py \
   --new-name my_code_project
 ```
 
-Fallback when the helper is unavailable:
+Fallback when the helper is unavailable — from this repository's root:
 
 ```bash
 rsync -a \
   --exclude '.venv/' --exclude '.pytest_cache/' --exclude '.ruff_cache/' \
   --exclude 'htmlcov/' --exclude 'output/' --exclude 'rendered/' --exclude '*.egg-info/' \
-  projects/working/bond/bond-coordinator/ projects/working/my_code_project/
+  ./ ../my_code_project/
 ```
 
 ## Required Post-Fork Edits
 
 - Update `manuscript/config.yaml`, `domain_profile.yaml`, `experiment_plan.yaml`,
   `CITATION.cff`, `.zenodo.json`, `codemeta.json`, and `pyproject.toml`.
-- Replace the optimizer, experiment config, manuscript variables, and figure
-  generation with the fork's research code.
-- Regenerate analysis outputs before updating manuscript result claims.
+- Replace the registry/ledger rule sets, the situation-room renderer, and the
+  manuscript variables with the fork's own domain code.
+- Regenerate outputs before updating manuscript claims.
 
 ## Validation Commands
 
-From the template repository root after copying into `projects/working/`:
+From the forked repository's root:
 
 ```bash
-uv run pytest projects/working/my_code_project/tests/ \
-  --cov=projects/working/my_code_project/src --cov-fail-under=90
-uv run python projects/working/my_code_project/scripts/optimization_analysis.py
-uv run python projects/working/my_code_project/scripts/z_generate_manuscript_variables.py
+uv sync --extra dev
+uv run pytest tests/ --cov=src --cov-fail-under=90
+uv run python scripts/status_report.py --no-gate-manifest
+uv run python scripts/z_generate_manuscript_variables.py
 ```
 
-For the public exemplar:
-
-```bash
-uv run pytest projects/working/bond/bond-coordinator/tests/ \
-  --cov=projects/working/bond/bond-coordinator/src --cov-fail-under=90
-```
+`scripts/reconcile.py` additionally needs the sibling `bond-api` checkout
+(see `[tool.uv.sources]` in `pyproject.toml`).
 
 ## Intentional Non-Standalone Dependencies
 
-Some analysis and documentation helpers intentionally use shared template
-infrastructure. The pure optimizer modules are project-local, but the full
-exemplar is forkable as a project in the broader template repository paradigm,
-not as an infrastructure-free package unless you also replace those adapters.
+Deliberate: the pure core (`src/bond_coordinator/`) imports nothing from the
+fleet, while `scripts/reconcile.py` consumes the frozen `bond-api` protocol
+through the sibling path dependency declared in `pyproject.toml`. A fork that
+drops `bond-api` keeps the core usable but loses film discovery.
 
 ## What Not To Claim
 
-Do not claim new optimization results from a renamed fork until
-`output/data/optimization_results.csv`, figures, validation reports, and
-manuscript variables have been regenerated from the forked code.
+Do not claim measured fleet status or coverage from a renamed fork until
+`output/data/suite_status.json`, `output/situation_room.html`, and the
+injected manuscript variables have been regenerated from the forked code.

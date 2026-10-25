@@ -4,7 +4,7 @@ type: "manuscript_guide"
 version: "0.1.0"
 ---
 
-# Manuscript (`projects/working/bond/bond-coordinator/manuscript/`)
+# Manuscript (`manuscript/`)
 
 Read-first behavioral rules live in [`../docs/agent_instructions.md`](../docs/agent_instructions.md).
 This file covers manuscript-specific editing for the coordinator.

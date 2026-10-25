@@ -21,8 +21,10 @@ dependencies = [
 
 # Local path dependency so scripts/reconcile.py can probe the FROZEN bond-api
 # protocol when reconciling the registry against real film packages.
+# Relative path (fleet convention, see ../bond-cli): the BOND repos are checked
+# out as siblings, so this resolves on any machine.
 [tool.uv.sources]
-bond-api = { path = "/Users/4d/Documents/GitHub/template/projects/working/bond/bond-api" }
+bond-api = { path = "../bond-api" }
 
 [project.optional-dependencies]
 dev = [

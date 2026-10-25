@@ -23,7 +23,7 @@ COVERAGE_FLOOR = 90.0
 #: Default age (days) after which an unfinished mission is flagged stale.
 DEFAULT_STALE_DAYS = 30
 
-#: Declared suite topology per SCOPE.md §2.2 — (layer id, human label, package
+#: Declared suite topology — (layer id, human label, package
 #: slugs).  The ``films`` layer is the registry's 27-film roster; infra layers
 #: are the sibling mission-infrastructure packages (not tracked as records,
 #: but their readiness is reported by the layer summary).

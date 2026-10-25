@@ -133,7 +133,9 @@ class TestStaleFlags:
         )
 
     def test_no_stale_within_threshold(self, fresh_ledger, sample_roster) -> None:
-        status = build_status(sample_roster, fresh_ledger)
+        # Pinned clock: without it the default wall clock ages the FIXED_NOW
+        # fixture past the staleness threshold and the test fails by calendar.
+        status = build_status(sample_roster, fresh_ledger, now=FIXED_NOW)
         assert status.stale_packages == ()
 
     def test_snapshot_carries_the_threshold_it_applied(

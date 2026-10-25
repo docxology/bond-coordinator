@@ -1,7 +1,9 @@
 # Manuscript Syntax Reference (bond-coordinator)
 
-Project-specific overlay on the canonical
-[`docs/guides/manuscript-semantics.md`](../../../../docs/guides/manuscript-semantics.md).
+Project-specific overlay on the canonical `docs/guides/manuscript-semantics.md`
+guide, which ships with the template workspace and not with this standalone
+repository; local token plumbing is documented in
+[`docs/rendering_pipeline.md`](../docs/rendering_pipeline.md).
 This file documents the **bond-coordinator**-specific section labels and the
 `{{TOKEN}}` table.  The coordinator defines no figures and no equations (it is
 an infrastructure/mission-control package), so those registries are absent.

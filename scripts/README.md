@@ -5,6 +5,7 @@ Thin orchestrators for `bond-coordinator` (all business logic lives in
 
 ```
 status_report.py                    print/persist suite status (--json)
+reconcile.py                        discover real film codenames/gadgets (--write, --gadgets)
 advance_mission.py                  advance a package's phase in the ledger
 build_situation_room.py             regenerate output/situation_room.html
 z_generate_manuscript_variables.py  hydrate manuscript {{TOKEN}}s (runs last)
@@ -12,6 +13,7 @@ z_generate_manuscript_variables.py  hydrate manuscript {{TOKEN}}s (runs last)
 
 ```bash
 uv run python scripts/status_report.py
+uv run python scripts/reconcile.py --write output/data/reconciled.json
 uv run python scripts/advance_mission.py --slug goldfinger --phase recon
 uv run python scripts/build_situation_room.py
 uv run python scripts/z_generate_manuscript_variables.py

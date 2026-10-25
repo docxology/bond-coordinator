@@ -14,18 +14,20 @@
     }
   ],
   "codeRepository": "https://github.com/docxology/bond-coordinator",
-  "dateModified": "2026-07-10",
+  "dateModified": "2026-10-25",
   "identifier": "10.5281/zenodo.20417136",
   "keywords": [
-    "optimization algorithms",
-    "gradient descent",
-    "convergence analysis",
-    "numerical methods",
-    "mathematical programming",
-    "reproducible research",
-    "infrastructure automation"
+    "mission control",
+    "film-package registry",
+    "mission-state ledger",
+    "append-only audit trail",
+    "registry reconciliation",
+    "suite status",
+    "software fleet",
+    "fault isolation",
+    "reproducible research"
   ],
   "license": "https://spdx.org/licenses/MIT",
-  "name": "Convergence Analysis of Gradient Descent Optimization",
-  "version": "2.5.2"
+  "name": "BOND-COORDINATOR",
+  "version": "0.1.0"
 }

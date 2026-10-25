@@ -16,7 +16,10 @@ counts or rules.  If two places compute the same thing, that is a defect.
 
 ## 3. Pure Core, Thin Orchestrators
 
-`src/` does no file I/O and no argv parsing.  `scripts/` does no business logic
+`src/` does no argv parsing and no implicit file I/O — the only writers are
+`situation.write_situation_room` and
+`manuscript_variables.resolve_manuscript_tree`, both of which take the
+destination path from their caller.  `scripts/` does no business logic
 (no transition rules, no aggregation, no HTML generation).  The dependency
 arrow is strictly `scripts/ → src/`.
 

@@ -10,8 +10,10 @@ behaviors matter to anyone working here:
    manuscript/.  The only residual mention of the exemplar is in docs prose
    explaining lineage, and currently there is none.
 
-2. **Local-only.**  There is no remote.  Never push anywhere.  Commit path-scoped
-   changes inside this package only with `git add -A` inside this directory.
+2. **Standalone repository.**  This package is its own repo with its own
+   `origin` (`docxology/bond-coordinator`, default branch `main`) — not a
+   directory nested inside the template worktree.  Commit at the repo root;
+   the fleet's other packages are sibling repositories, not subdirectories.
 
 3. **Pure core, thin orchestrators.**  Business logic lives in
    `src/bond_coordinator/` (stdlib + pyyaml); `scripts/` only parses argv,
@@ -24,7 +26,7 @@ behaviors matter to anyone working here:
   Do not delete tests to hit it.
 - **Zero mocks**: no `unittest.mock` / `MagicMock` / `@patch` anywhere in
   `tests/`.
-- **Determinism**: fixed clocks in fixtures; no wall-clock tokens in generated
-  artifacts.
+- **Determinism**: fixed clocks in fixtures; `generated_at` is the only
+  wall-clock field in generated artifacts.
 - **Drift sweep**: an `rg` over the tree for leftover exemplar identity
   strings must return nothing (any occurrence is a defect).

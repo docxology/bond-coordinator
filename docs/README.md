@@ -23,15 +23,18 @@ modifying any project file.  It is the gate for the other documents.
 | [`quickstart.md`](quickstart.md) | 5-minute first run. |
 | [`troubleshooting.md`](troubleshooting.md) | Symptom-driven recipes. |
 | [`faq.md`](faq.md) | Common questions (no figures, seed vs. measured status, codenames, deps). |
-| [`forking_guide.md`](forking_guide.md) | Own-git / local-only / boundary contract. |
+| [`forking_guide.md`](forking_guide.md) | Own-git / standalone-repo / boundary contract. |
 | [`rendering_pipeline.md`](rendering_pipeline.md) | Manuscript token hydration (no pixel pipeline here). |
 
 ## Key conventions
 
 - **Pure core**: `src/bond_coordinator/` = stdlib + pyyaml, no `infrastructure.*`,
-  no siblings, no file I/O.  `scripts/` is the only filesystem/probe layer.
+  no siblings.  Its only writers take the destination from the caller
+  (`situation.write_situation_room`, `manuscript_variables.resolve_manuscript_tree`);
+  everything else computes and returns.  `scripts/` owns paths, argv, and probes.
 - **Zero mocks**: no `unittest.mock` / `MagicMock` / `@patch` anywhere in `tests/`.
-- **Determinism**: injectable clocks; no wall-clock tokens; byte-stable outputs.
+- **Determinism**: injectable clocks; `generated_at` is the one wall-clock field
+  in generated output, and tests pin `FIXED_NOW` so builds are byte-stable.
 - **Show-not-tell**: reference explicit paths/functions.
 
 ## Verification commands

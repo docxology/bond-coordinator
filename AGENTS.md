@@ -5,7 +5,10 @@ Layer 2 of a 33-package fleet (27 film packages + 6 mission-infrastructure
 packages).  This package is the authoritative **registry and situation room**:
 it records, audits, and reports on the fleet; it implements no film algorithms.
 
-This is an **active project** under `projects/working/bond/`.  Behavioral rules
+This is the standalone `bond-coordinator` repository — the fleet's other
+packages (`../bond-api`, `../bond-utilities`, `../bond-ops`, `../bond-cli`,
+`../bond-orchestrator`, and the 27 `../bond-<film>` repos) are sibling
+checkouts, never subdirectories.  Behavioral rules
 for agents live in [`docs/agent_instructions.md`](docs/agent_instructions.md) —
 **read it before modifying any file here**.  Architecture boundaries:
 [`docs/architecture.md`](docs/architecture.md).  Test philosophy:
@@ -15,7 +18,7 @@ for agents live in [`docs/agent_instructions.md`](docs/agent_instructions.md) �
 
 | Surface | Rule |
 | --- | --- |
-| `src/bond_coordinator/` (pure core) | stdlib + `pyyaml` only — **no** `infrastructure.*`, **no** sibling BOND imports, **no** filesystem side-effects. `MissionLedger` JSON persistence is provided as pure methods; only `scripts/` touches disk. |
+| `src/bond_coordinator/` (pure core) | stdlib + `pyyaml` only — **no** `infrastructure.*`, **no** sibling BOND imports, and no filesystem side-effects beyond the two writers that take an explicit destination (`situation.write_situation_room`, `manuscript_variables.resolve_manuscript_tree`). `MissionLedger` JSON persistence is provided as pure methods; `scripts/` supplies every path. |
 | `scripts/` | Thin orchestrators: argv parsing, file I/O, `bond-api` provider discovery + availability probe. May import `bond_coordinator`. Cross-package reads are guarded per film with `except Exception` and reported on stderr — one broken sibling must never abort a fleet-wide run. |
 | `tests/` | Zero-mock, real-data. Deterministic 5-film fixture in `conftest.py`; full-registry completeness assertions as well. |
 
@@ -38,9 +41,9 @@ Enforced by `docs/architecture.md` and the `manuscript/layer_contract.yaml`.
 
 ## Key features & capabilities
 
-- **Registry**: canon-ordered 27-film `ROSTER` seeded from
-  `projects/working/bond/SCOPE.md` §2.1, with provisional mission codenames
-  assigned by mission control.
+- **Registry**: canon-ordered 27-film `ROSTER` (the literal in
+  `src/bond_coordinator/registry.py` is the authority), with provisional mission
+  codenames assigned by mission control.
 - **Ledger**: strict forward-only transitions, same-phase re-entry (touch),
   multi-step forward `jump`, append-only `history`, lossless
   `to_json`/`from_json` provenance.
@@ -89,8 +92,9 @@ output/                     gitignored generated artifacts (indicative only)
 ## Install / run
 
 Dependencies install from this directory with `uv sync --extra dev`.  This
-package is not part of the template uv workspace (`members = []`), so run all
-commands from **inside** this directory.
+package is standalone — there is no parent `uv` workspace — so run all commands
+from **inside** this directory.  The `bond-api` dependency resolves through the
+sibling path declared in `[tool.uv.sources]`.
 
 ```bash
 uv sync --extra dev
@@ -173,4 +177,6 @@ uv run pytest tests/ --cov=src --cov-report=term-missing
 - `docs/agent_instructions.md` — read-first behavioral rules.
 - `docs/architecture.md`, `docs/testing_philosophy.md` — boundaries + test bar.
 - `manuscript/config.yaml` + `manuscript/SYNTAX.md` — identity + `{{TOKEN}}` table.
-- `../SCOPE.md` — the fleet roster (§2.1) this registry mirrors.
+- `src/bond_coordinator/registry.py` — the `ROSTER` literal this registry
+  reports (the fleet-level `SCOPE.md` is a sibling-workspace document, not
+  shipped here).

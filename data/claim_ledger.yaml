@@ -4,42 +4,42 @@ claims:
   - claim_id: registry-total-packages
     kind: number
     value: 27
-    source: projects/working/bond/bond-coordinator/src/bond_coordinator/registry.py ROSTER (SCOPE.md §2.1)
+    source: src/bond_coordinator/registry.py ROSTER (27 entries, canon order)
     source_tier: project_source
     freshness: active
     artifact_path: src/bond_coordinator/registry.py
   - claim_id: registry-canon-first
     kind: string
     value: "dr_no 1962 rank 1"
-    source: projects/working/bond/bond-coordinator/src/bond_coordinator/registry.py ROSTER first entry
+    source: src/bond_coordinator/registry.py ROSTER first entry
     source_tier: project_source
     freshness: active
     artifact_path: src/bond_coordinator/registry.py
   - claim_id: registry-canon-last
     kind: string
     value: "never_say_never_again 1983 rank 27"
-    source: projects/working/bond/bond_coordinator/src/bond_coordinator/registry.py ROSTER last entry
+    source: src/bond_coordinator/registry.py ROSTER last entry
     source_tier: project_source
     freshness: active
     artifact_path: src/bond_coordinator/registry.py
   - claim_id: coverage-floor-pct
     kind: number
     value: 90.0
-    source: projects/working/bond/bond-coordinator/src/bond_coordinator/status.py COVERAGE_FLOOR and pyproject fail_under
+    source: src/bond_coordinator/status.py COVERAGE_FLOOR and pyproject fail_under
     source_tier: project_source
     freshness: active
     artifact_path: src/bond_coordinator/status.py
   - claim_id: lifecycle-initial-phase
     kind: string
     value: "brief"
-    source: projects/working/bond/bond-coordinator/src/bond_coordinator/ledger.py MissionLedger.__init__
+    source: src/bond_coordinator/ledger.py MissionLedger.__init__
     source_tier: project_source
     freshness: active
     artifact_path: src/bond_coordinator/ledger.py
   - claim_id: stale-default-days
     kind: number
     value: 30
-    source: projects/working/bond/bond-coordinator/src/bond_coordinator/status.py DEFAULT_STALE_DAYS
+    source: src/bond_coordinator/status.py DEFAULT_STALE_DAYS
     source_tier: project_source
     freshness: active
     artifact_path: src/bond_coordinator/status.py

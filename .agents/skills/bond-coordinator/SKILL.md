@@ -9,8 +9,8 @@ tags: [bond, mission-control, registry, reconcile, ledger, situation-room]
 
 # bond-coordinator
 
-Project-scoped skill for the package at
-`projects/working/bond/bond-coordinator/`.  Load when working inside it.
+Project-scoped skill for the `bond-coordinator` repository itself.  Load when
+working inside this repo.
 
 ## When to Use
 
@@ -23,7 +23,7 @@ Project-scoped skill for the package at
 ## Quick Reference
 
 ```bash
-# From the package directory (not the repo root — worktree is local-only)
+# From this repository's root
 uv sync --extra dev
 uv run pytest tests/ --cov=src --cov-fail-under=90
 uv run ruff check src scripts tests && uv run ruff format --check src scripts tests
@@ -49,13 +49,15 @@ uv run python scripts/z_generate_manuscript_variables.py
 - **Pure core.**  `src/` imports stdlib + `pyyaml` only — no
   `infrastructure.*`, no sibling BOND packages, no file I/O.
 - **Outputs are disposable.**  Never edit `output/`; regenerate from source.
-- **Local-only.**  Own git repo, no remote.  Commit path-scoped inside this
-  directory only.
-- **bond-api not built.**  The coordinator ships a pure-core protocol mirror
-  (`src/bond_coordinator/types.py`); swap when Layer 1 lands (see `TODO.md`).
+- **Standalone repository.**  Own git repo with `origin`
+  (`docxology/bond-coordinator`, default branch `main`); commit at the root,
+  not into a nesting template worktree.
+- **bond-api is built — the mirror is a boundary, not a stopgap.**  The pure
+  core ships its own protocol mirror (`src/bond_coordinator/types.py`) so `src/`
+  imports no sibling (see `docs/architecture.md`).
 
 ## Cross-refs
 
 - Project contract: [`AGENTS.md`](../../../AGENTS.md)
 - Read-first rules: [`docs/agent_instructions.md`](../../../docs/agent_instructions.md)
-- Fleet scope: [`SCOPE.md`](../../SCOPE.md)
+- Architecture & layer contract: [`docs/architecture.md`](../../../docs/architecture.md)
