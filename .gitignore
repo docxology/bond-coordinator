@@ -18,3 +18,6 @@ output/
 
 # build artifacts (setuptools/uv path-dep builds)
 build/
+
+# Build output the vendored copies' own builds write into vendor/.
+vendor/**/build/
