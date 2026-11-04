@@ -13,7 +13,7 @@ description = "Mission control for the BOND suite: film-package registry, missio
 authors = [
     {name = "Daniel Ari Friedman", email = "daniel@activeinference.institute"}
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "pyyaml>=6.0",
     "bond-api",
@@ -21,10 +21,11 @@ dependencies = [
 
 # Local path dependency so scripts/reconcile.py can probe the FROZEN bond-api
 # protocol when reconciling the registry against real film packages.
-# Relative path (fleet convention, see ../bond-cli): the BOND repos are checked
-# out as siblings, so this resolves on any machine.
+# Vendored copy (byte-checked by `scripts/vendor.py --check`; provenance in
+# vendor/bond-api/PROVENANCE.json), so a clone with no sibling checkouts still
+# resolves — which is also what lets Dependabot fetch the files.
 [tool.uv.sources]
-bond-api = { path = "../bond-api" }
+bond-api = { path = "vendor/bond-api" }
 
 [project.optional-dependencies]
 dev = [
@@ -69,10 +70,14 @@ exclude_lines = [
 ]
 
 [tool.ruff]
+# The vendored copies are byte-identical to upstream and must stay that way.
+extend-exclude = ["vendor"]
 target-version = "py310"
 line-length = 88
 
 [tool.mypy]
+# Vendored copies are a dependency; their bytes are bound by scripts/vendor.py.
+exclude = ["(^|/)vendor/"]
 python_version = "3.10"
 files = ["src/bond_coordinator", "scripts"]
 mypy_path = ["src"]

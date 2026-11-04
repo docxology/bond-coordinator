@@ -75,14 +75,16 @@ uv run python scripts/status_report.py --no-gate-manifest
 uv run python scripts/z_generate_manuscript_variables.py
 ```
 
-`scripts/reconcile.py` additionally needs the sibling `bond-api` checkout
-(see `[tool.uv.sources]` in `pyproject.toml`).
+`scripts/reconcile.py` reads films' real codenames through `bond_api`, which
+`uv sync --extra dev` installs from the vendored copy (see `[tool.uv.sources]`
+in `pyproject.toml` and `vendor/bond-api/`); no sibling checkout is needed.
 
 ## Intentional Non-Standalone Dependencies
 
 Deliberate: the pure core (`src/bond_coordinator/`) imports nothing from the
 fleet, while `scripts/reconcile.py` consumes the frozen `bond-api` protocol
-through the sibling path dependency declared in `pyproject.toml`. A fork that
+through the path dependency declared in `pyproject.toml` — a vendored copy of
+the Layer-1 source at `vendor/bond-api`, not a sibling checkout. A fork that
 drops `bond-api` keeps the core usable but loses film discovery.
 
 ## What Not To Claim
