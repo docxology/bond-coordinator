@@ -8,7 +8,9 @@ it records, audits, and reports on the fleet; it implements no film algorithms.
 This is the standalone `bond-coordinator` repository — the fleet's other
 packages (`../bond-api`, `../bond-utilities`, `../bond-ops`, `../bond-cli`,
 `../bond-orchestrator`, and the 27 `../bond-<film>` repos) are sibling
-checkouts, never subdirectories.  Behavioral rules
+checkouts, never subdirectories.  (The `bond-api` *source* this repository
+depends on is additionally vendored in-tree at `vendor/bond-api`; that is a
+dependency copy, not one of those checkouts.)  Behavioral rules
 for agents live in [`docs/agent_instructions.md`](docs/agent_instructions.md) —
 **read it before modifying any file here**.  Architecture boundaries:
 [`docs/architecture.md`](docs/architecture.md).  Test philosophy:
@@ -94,7 +96,8 @@ output/                     gitignored generated artifacts (indicative only)
 Dependencies install from this directory with `uv sync --extra dev`.  This
 package is standalone — there is no parent `uv` workspace — so run all commands
 from **inside** this directory.  The `bond-api` dependency resolves through the
-sibling path declared in `[tool.uv.sources]`.
+vendored copy declared in `[tool.uv.sources]` (`vendor/bond-api`, byte-checked
+by `scripts/vendor.py --check`).
 
 ```bash
 uv sync --extra dev

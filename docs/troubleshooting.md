@@ -34,8 +34,10 @@ with records `{"name", "film", "purpose"}` and run
 
 ## `importlib.util.find_spec("bond_api")` returns False
 
-This is an **importability** result, not an existence claim: `bond-api` is
-built, but it is not installed in this interpreter's environment.  The
+This is an **importability** result, not an existence claim: the `bond-api`
+source is present in-tree (`vendor/bond-api`, byte-checked by
+`scripts/vendor.py --check`), but it is not installed in this interpreter's
+environment — `uv sync --extra dev` is what installs it.  The
 coordinator reports `dependency_ready: false`, renders "not importable in this
 environment (pure-core mirror in use)", and keeps working — the pure core never
 needed it.  No action is required unless you want live reconciliation:

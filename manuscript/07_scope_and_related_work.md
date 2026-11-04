@@ -15,7 +15,7 @@ Within that boundary this package is deliberately standalone.  Its `src/` core
 is pure — no `infrastructure.*`, no sibling-package imports (the `reconcile`
 **script** discovers films through `bond-api`, but the pure merge functions
 take plain data) — so the registry, ledger, status, and situation room can run
-in any Python 3.10+ environment with `pyyaml` installed, exactly as the
+in any Python 3.11+ environment with `pyyaml` installed, exactly as the
 exemplar's mathematical core could.
 
 ## Related work

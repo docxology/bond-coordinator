@@ -247,7 +247,8 @@ uv run python scripts/status_report.py --json \
 - **Standalone repository, independent gates.**  The coordinator has its own
   `origin` (`docxology/bond-coordinator`, default branch `main`) and its own
   `uv.lock`; it is not a member of a shared `uv` workspace, so every gate below
-  runs from this directory and resolves its siblings by path.
+  runs from this directory and resolves `bond-api` from the vendored copy
+  (`vendor/bond-api`).
 
 ## Verification
 

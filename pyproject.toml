@@ -21,8 +21,9 @@ dependencies = [
 
 # Local path dependency so scripts/reconcile.py can probe the FROZEN bond-api
 # protocol when reconciling the registry against real film packages.
-# Relative path (fleet convention, see ../bond-cli): the BOND repos are checked
-# out as siblings, so this resolves on any machine.
+# Vendored copy (byte-checked by `scripts/vendor.py --check`; provenance in
+# vendor/bond-api/PROVENANCE.json), so a clone with no sibling checkouts still
+# resolves — which is also what lets Dependabot fetch the files.
 [tool.uv.sources]
 bond-api = { path = "vendor/bond-api" }
 

@@ -13,7 +13,9 @@ behaviors matter to anyone working here:
 2. **Standalone repository.**  This package is its own repo with its own
    `origin` (`docxology/bond-coordinator`, default branch `main`) — not a
    directory nested inside the template worktree.  Commit at the repo root;
-   the fleet's other packages are sibling repositories, not subdirectories.
+   the fleet's other packages are sibling repositories, not subdirectories
+   (the vendored `bond-api` source at `vendor/bond-api` is a dependency copy
+   shipped in-tree, not a nested fleet package).
 
 3. **Pure core, thin orchestrators.**  Business logic lives in
    `src/bond_coordinator/` (stdlib + pyyaml); `scripts/` only parses argv,

@@ -6,7 +6,7 @@
 mission-state ledger, aggregate status, situation room, and manuscript
 variables.  It imports only the standard library plus `pyyaml` — no
 `infrastructure.*`, no sibling BOND packages, and no filesystem side-effects.
-This purity lets the core run in any Python 3.10+ environment, exactly as the
+This purity lets the core run in any Python 3.11+ environment, exactly as the
 exemplar's mathematical core could.
 
 ## Modules
