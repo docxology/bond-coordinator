@@ -9,13 +9,14 @@ one self-contained HTML dashboard (`situation.py`).  The `src/` core is pure
 (stdlib + `pyyaml`, no sibling imports); `scripts/` holds the thin
 orchestrators that bind it to disk and to `bond-api` discovery.
 
-**Verified state, measured 2026-08-05 at commit `a7300c7`** (Python 3.14.6,
-pytest 9.0.2): **221 tests passing, 0 skipped, 100.00% line + branch coverage
-on `src/`** (604 statements, 172 branches, 0 missed) against the enforced
-`--cov-fail-under=90` floor.  `ruff check`, `ruff format --check`, and `mypy`
-are clean across `src scripts tests` (30 files formatted, 14 typed).
+**Verified state, re-measured 2026-11-04 after the `bond-api` vendoring round**
+(Python 3.14.9, pytest 9.1.1): **232 tests passing, 1 skipped, 100.00% line +
+branch coverage on `src/`** (615 statements, 180 branches, 0 missed) against the
+enforced `--cov-fail-under=90` floor.  `ruff check`, `ruff format --check` (32
+files), and `mypy` (15 source files) are clean across `src scripts tests`, and
+`scripts/vendor.py --check` reports `vendor/bond-api: ok` (0 findings).
 
-Every item below is open as of that commit.  Completed work is deleted, not
+Every item below is open as of that measurement.  Completed work is deleted, not
 archived: the five findings from the adversarial audit
 (`../output/verify/bond-coordinator.json` — the hollow reconcile-CLI gate, the
 "bond-utilities is not yet built" claim in four files, the "every package is
@@ -249,6 +250,15 @@ uv run python scripts/status_report.py --json \
   `uv.lock`; it is not a member of a shared `uv` workspace, so every gate below
   runs from this directory and resolves `bond-api` from the vendored copy
   (`vendor/bond-api`).
+- **Three reconcile CLI tests assume the checkout keeps its own name under the
+  fleet root.**  `tests/test_reconcile.py` resolves the CLI as
+  `<parent>/bond-coordinator/scripts/reconcile.py` (`BOND = parents[2]`), so a
+  checkout renamed in place fails those three with `FileNotFoundError` while
+  lock, sync and the rest of the suite pass.  Measured 2026-11-04: identical at
+  the pre-vendoring head `239a415` (sibling `bond-api` present) and at the
+  vendored head in a parent holding no siblings, so this is a test-harness
+  convention, not a dependency on a sibling.  Fix shape: resolve the CLI from
+  `Path(__file__).resolve().parents[1]`, which is the same path in the fleet.
 
 ## Verification
 
@@ -258,7 +268,7 @@ directory (it is not a member of the template `uv` workspace).
 ```bash
 uv sync --extra dev
 
-# 1. Suite + coverage gate — expect: 232 tests (231 passed; the real-films CLI
+# 1. Suite + coverage gate — expect: 233 tests (232 passed; the real-films CLI
 #    test skips when no slug-named fleet sibling is checked out), 100.00%,
 #    "Required test coverage of 90% reached."
 uv run pytest tests/ --cov=src --cov-fail-under=90
@@ -266,10 +276,10 @@ uv run pytest tests/ --cov=src --cov-fail-under=90
 # 2. Lint — expect: "All checks passed!"
 uv run ruff check src scripts tests
 
-# 3. Format — expect: "30 files already formatted"
+# 3. Format — expect: "32 files already formatted"
 uv run ruff format --check src scripts tests
 
-# 4. Types — expect: "Success: no issues found in 14 source files"
+# 4. Types — expect: "Success: no issues found in 15 source files"
 uv run mypy
 ```
 
