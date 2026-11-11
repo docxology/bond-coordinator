@@ -401,3 +401,65 @@ shape (unchanged, covered by
 - `GATE-PATH-1`, `PROVENANCE-TEST-1`, `DOC-XREF-1` (manuscript side) — see above.
 - No `mission.py` / `MissionProvider` — by design (Layer 2 consumer, not
   implementer); `src/bond_coordinator/types.py` stays a pure-core mirror.
+
+## Workflowz review — 2026-11-10
+
+Bounded read-only review of the supplied packet (root `AGENTS.md`, `README.md`,
+this file, `pyproject.toml`, and excerpts of `src/bond_coordinator/{__init__,types,reconcile,manuscript_variables,status}.py`;
+`status.py` excerpt ends at line 218). One new item. The six items above are
+unchanged. No mock/fallback/fake/stub production substitute appears in the
+supplied source; `types.py`'s `bond-api` mirror and the stdlib ledger codecs
+are declared layer-contract adapters (*Known limitations*), not unfinished
+work, and are not re-flagged.
+
+### Verification
+
+#### `TOOLCHAIN-TARGET-1` — declared Python floor and static-analysis targets disagree, and no file names the verified interpreter
+
+**Wrong:** three configuration facts about the supported Python range cannot
+all be checked against each other today:
+
+- `pyproject.toml:16` declares `requires-python = ">=3.11"`.
+- `pyproject.toml:75` sets ruff `target-version = "py310"` and
+  `pyproject.toml:81` sets mypy `python_version = "3.10"` — both below the
+  declared floor, so neither tool will reject 3.11-only syntax even though the
+  package metadata permits only 3.11+ interpreters.
+- The interpreter the gate was actually measured on exists only as prose in
+  `TODO.md:12-13` (Python 3.14.9, pytest 9.1.1). `pyproject.toml:90-91`'s
+  `[tool.uv]` section carries just an "Inherits workspace settings" comment,
+  while `AGENTS.md:96-98` states this package is standalone with no parent
+  `uv` workspace — so no checked-in pin selects that interpreter, and a fresh
+  `uv sync --extra dev` resolves on whatever Python the contributor has.
+
+**Done looks like:** `requires-python`, ruff `target-version`, and mypy
+`python_version` express one consistent floor (raise the two tool targets to
+`py311` / `"3.11"`, or lower the floor to `>=3.10` only if 3.10 support is
+actually intended), and the interpreter used for the reported verification run
+is pinned in a checked-in uv setting (e.g. `.python-version` or
+`[tool.uv] python`) matching the version the next verification note cites.
+Re-record the *Verified state* paragraph in this file against that pinned
+interpreter. This is a consistency/pinning change only: no dependency version
+is claimed outdated, and no interpreter upgrade is prescribed — the pin must
+record the version the maintainer actually verifies on, with any dependency or
+reproducibility constraint that forces it noted alongside.
+
+**Demonstrate:**
+
+```bash
+# The pinned interpreter is the one uv selects, and it satisfies the floor:
+uv sync --extra dev
+uv run python -c "import sys; print(sys.version); assert sys.version_info >= (3, 11)"
+# Ruff and mypy now analyse against the declared floor and stay clean:
+uv run ruff check src scripts tests
+uv run mypy
+# The measured gate is reproduced on that interpreter before TODO.md re-cites it:
+uv run pytest tests/ --cov=src --cov-fail-under=90
+```
+
+**Dependencies/constraints:** independent of every open item above. Pure-core
+layer contract (`AGENTS.md:23`: stdlib + `pyyaml`, no sibling imports) is
+unaffected — no source change is required. `vendor/bond-api` stays excluded
+from both tools (`pyproject.toml:74,80`) and byte-bound by
+`scripts/vendor.py --check`; do not retarget it. If a dependency or the
+scientific-reproducibility bar requires keeping a specific interpreter, record
+that constraint in the same edit rather than bumping past it.
