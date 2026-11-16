@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import os
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -36,7 +36,7 @@ SAMPLE_SLUGS: tuple[str, ...] = (
 )
 
 #: Fixed reference clock for all time-dependent assertions.
-FIXED_NOW = datetime(2026, 8, 4, 12, 0, 0, tzinfo=timezone.utc)
+FIXED_NOW = datetime(2026, 8, 4, 12, 0, 0, tzinfo=UTC)
 
 
 @pytest.fixture

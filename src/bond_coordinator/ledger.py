@@ -17,7 +17,7 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from .registry import ROSTER, PackageRecord
 from .types import MissionPhase
@@ -50,7 +50,7 @@ def _require_forward(slug: str, current: MissionPhase, desired_index: int) -> No
 
 def utcnow() -> datetime:
     """Current time as a timezone-aware UTC datetime (determinism anchor)."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 @dataclass(frozen=True)
