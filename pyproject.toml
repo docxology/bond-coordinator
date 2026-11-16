@@ -72,13 +72,13 @@ exclude_lines = [
 [tool.ruff]
 # The vendored copies are byte-identical to upstream and must stay that way.
 extend-exclude = ["vendor"]
-target-version = "py310"
+target-version = "py311"
 line-length = 88
 
 [tool.mypy]
 # Vendored copies are a dependency; their bytes are bound by scripts/vendor.py.
 exclude = ["(^|/)vendor/"]
-python_version = "3.10"
+python_version = "3.11"
 files = ["src/bond_coordinator", "scripts"]
 mypy_path = ["src"]
 check_untyped_defs = true
