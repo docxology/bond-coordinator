@@ -12,6 +12,25 @@ This package does **not** implement any film's algorithms.  It records, audits,
 and reports on the fleet so that *what exists, where it is in its mission, and
 whether it is healthy* are machine-checkable facts.
 
+## Control-plane dataflow
+
+```mermaid
+flowchart TD
+    accTitle: bond-coordinator fleet registry, gate reconciliation and situation room flow
+    accDescr: The provisional 27-film ROSTER seed, live discovered film providers and the bond-ops gate manifest feed reconcile.py, gates.py and ledger.py to override live codenames, harvest gadgets, derive measured PackageStatus and coverage and track MissionPhase transitions, producing status.py JSON snapshots and the situation.py HTML dashboard.
+    I["27-film ROSTER seed, discovered bond-api providers and bond-ops gate manifest"]
+    G0["registry.py and reconcile.py<br/>Override live film codenames and harvest GadgetRegistry callables"]
+    G1["gates.py and ledger.py<br/>Parse gate manifest, derive measured PackageStatus and coverage and track 5-phase MissionPhase"]
+    O["status.py and situation.py<br/>Deterministic suite-status snapshot JSON and self-contained Situation Room HTML"]
+
+    I --> G0
+    I --> G1
+    G0 --> O
+    G1 --> O
+```
+
+**Source map:** [`types.py`](src/bond_coordinator/types.py), [`registry.py`](src/bond_coordinator/registry.py), [`reconcile.py`](src/bond_coordinator/reconcile.py), [`gates.py`](src/bond_coordinator/gates.py), [`ledger.py`](src/bond_coordinator/ledger.py), [`status.py`](src/bond_coordinator/status.py), [`situation.py`](src/bond_coordinator/situation.py).
+
 ## What it provides
 
 | Capability | Module | Responsibility |
