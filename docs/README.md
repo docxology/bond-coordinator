@@ -1,5 +1,7 @@
 # docs/ — Agent-Facing Documentation Hub
 
+[Package maintenance](package-maintenance.md) covers dependency and release records.
+
 Operational rulebook for AI agents and developers inside `bond-coordinator`.
 
 ## Read-first protocol
