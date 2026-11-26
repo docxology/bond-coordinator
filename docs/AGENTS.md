@@ -1,5 +1,7 @@
 # docs/ — AGENTS.md
 
+[Package maintenance](package-maintenance.md) identifies the dependency and citation records.
+
 Technical overview of `docs/` for `bond-coordinator`.  Every document here is a
 hard constraint, not a suggestion; the read-first entry point is
 [`agent_instructions.md`](agent_instructions.md).

@@ -1,5 +1,7 @@
 # bond-coordinator — mission control for the BOND suite
 
+See [package maintenance](docs/package-maintenance.md) for dependency and citation records.
+
 **Codename: MISSION CONTROL**
 
 `bond-coordinator` is the Layer-2 **registry and situation room** for
