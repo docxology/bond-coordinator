@@ -45,7 +45,7 @@ flowchart TD
 | **Mission-state ledger** | `src/bond_coordinator/ledger.py` | Each package's lifecycle (`brief → recon → plan → execute → debrief`) with forward-only transition rules, attributable-identity validation, an append-only audit trail, and deterministic audit summaries (`transition_summary`, `per_agent_summary`, `phase_timeline`). |
 | **Suite status** | `src/bond_coordinator/status.py` | Deterministic aggregate snapshot: counts by state/phase, coverage summary, stale/blocked flags (carrying the `stale_days` threshold actually applied), and **per-layer summaries** of the declared suite topology. Owns `COVERAGE_FLOOR`, the gate the dashboard legend reads. |
 | **Situation room** | `src/bond_coordinator/situation.py` | Self-contained HTML dashboard: per-package table with **mission-timeline bars** and **coverage heat**, suite-layers table, **per-film gadget groups**, and a recent-transitions audit tail. |
-| **Manuscript variables** | `src/bond_coordinator/manuscript_variables.py` | Injects identity (from `manuscript/config.yaml`) and registry-derived counts as `{{TOKEN}}`s — never hand-authored in prose. |
+| **Manuscript variables** | `src/bond_coordinator/manuscript_variables.py` | Injects identity (from `docs/manuscript/config.yaml`) and registry-derived counts as `{{TOKEN}}`s — never hand-authored in prose. |
 
 The `src/bond_coordinator/` core is **pure**: standard library + `pyyaml` only,
 no `infrastructure.*`, no sibling-package imports.  Thin orchestrators in
@@ -129,7 +129,7 @@ sibling never aborts a fleet-wide run.  Full contract and degradation table:
   module is the fleet's provenance-record convention). This package does **not
   use `mission_io` yet**: `MissionLedger`'s JSON codecs and
   `scripts/advance_mission.py` are still local stdlib equivalents, and routing
-  them through Layer 0 is open work (see `TODO.md#ledger-io-1`). The pure core imports
+  them through Layer 0 is open work (see [ledger I/O backlog](TODO.md#ledger-io-1)). The pure core imports
   neither sibling by design: it ships its own protocol mirror
   (`src/bond_coordinator/types.py`) to keep `src/` sibling-free.
 
@@ -141,7 +141,7 @@ src/bond_coordinator/   pure core (types, registry, gates, reconcile, ledger, st
 scripts/                thin orchestrators (status_report, reconcile, advance_mission,
                         build_situation_room, z_generate_manuscript_variables)
 tests/                  zero-mock real-data suite; deterministic 5-film fixture (tests/conftest.py)
-manuscript/             config.yaml identity + sections with {{TOKEN}} injection
+docs/manuscript/             config.yaml identity + sections with {{TOKEN}} injection
 docs/                   agent-facing operational rulebook
 data/                   advisory validation overlays (claim_ledger.yaml)
 ```
@@ -150,3 +150,5 @@ data/                   advisory validation overlays (claim_ledger.yaml)
 
 Daniel Ari Friedman · Active Inference Institute
 (`daniel@activeinference.institute`, ORCID 0000-0001-6232-9096) · MIT.
+
+See the [canonical manuscript](docs/manuscript/) and the [standalone rendering guide](docs/rendering_pipeline.md).

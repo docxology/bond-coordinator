@@ -1,9 +1,9 @@
 """Thin orchestrator: hydrate manuscript {{TOKEN}}s, runs last (z_ prefix).
 
-Loads the manuscript identity + fleet metrics from ``manuscript/config.yaml``
+Loads the manuscript identity + fleet metrics from ``docs/manuscript/config.yaml``
 via the pure core, writes the resolved mapping to
 ``output/data/manuscript_variables.json``, and substitutes every template in
-``manuscript/*.md`` into ``output/manuscript/*.md``.
+``docs/manuscript/*.md`` into ``output/manuscript/*.md``.
 
 Registry status/coverage tokens are hydrated from the fleet gate manifest
 (``--gate-manifest``) when it exists; otherwise the registry's unmeasured seed
@@ -62,7 +62,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--config",
         type=Path,
-        default=PROJECT_ROOT / "manuscript" / "config.yaml",
+        default=PROJECT_ROOT / "docs" / "manuscript" / "config.yaml",
     )
     parser.add_argument(
         "--allow-draft",
@@ -94,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     out_dir = PROJECT_ROOT / "output" / "manuscript"
-    written = resolve_manuscript_tree(PROJECT_ROOT / "manuscript", out_dir, variables)
+    written = resolve_manuscript_tree(PROJECT_ROOT / "docs" / "manuscript", out_dir, variables)
     print(f"resolved {len(variables)} tokens into {len(written)} manuscript files")
     print(f"  variables -> {data_path}")
     print(f"  tree      -> {out_dir}")

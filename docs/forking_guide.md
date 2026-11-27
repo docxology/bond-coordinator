@@ -7,7 +7,7 @@ behaviors matter to anyone working here:
 1. **Own identity, own git repo.**  This package has its own `git init` history,
    its own `pyproject.toml` name/version, config, and manuscript.  Its
    re-identity removed exemplar strings from src/, tests/, scripts/, and
-   manuscript/.  The only residual mention of the exemplar is in docs prose
+   docs/manuscript/.  The only residual mention of the exemplar is in docs prose
    explaining lineage, and currently there is none.
 
 2. **Standalone repository.**  This package is its own repo with its own
@@ -32,3 +32,12 @@ behaviors matter to anyone working here:
   wall-clock field in generated artifacts.
 - **Drift sweep**: an `rg` over the tree for leftover exemplar identity
   strings must return nothing (any occurrence is a defect).
+
+## Fork a standalone checkout
+
+Start from your own fork or copy of this repository. Update the manuscript
+identity and the root package and citation metadata when you rename it. Use the
+[seeded manuscript replay](rendering_pipeline.md) to verify the new identity and
+local registry output. The seed status and coverage fields carry no
+measurements of sibling packages. The [retained publication record](publication-record.md)
+applies to the source repository.

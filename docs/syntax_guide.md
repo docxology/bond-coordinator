@@ -11,12 +11,12 @@ injected by `scripts/z_generate_manuscript_variables.py` →
 
 The authoritative token table is the return value of `generate_variables()`,
 and the cross-reference gate is `tests/test_manuscript_variables.py` (it reads
-the real `manuscript/config.yaml`).  `manuscript/SYNTAX.md` mirrors that table
+the real `docs/manuscript/config.yaml`).  `docs/manuscript/SYNTAX.md` mirrors that table
 for humans but may lag the code; the test is the source of truth.
 
 ## Identity config
 
-`manuscript/config.yaml` provides:
+`docs/manuscript/config.yaml` provides:
 
 - `paper.title`, `paper.subtitle`, `paper.version` → `CONFIG_TITLE`, `CONFIG_SUBTITLE`, `CONFIG_VERSION`
 - `mission.codename` → `CONFIG_CODENAME`
@@ -43,10 +43,10 @@ the code.
 
 ## Manuscript Markdown
 
-- Citation keys resolve from `manuscript/references.bib`; never write raw
-  `\cite{}` (see `manuscript/SYNTAX.md`).
+- Citation keys resolve from `docs/manuscript/references.bib`; never write raw
+  `\cite{}` (see `docs/manuscript/SYNTAX.md`).
 - Every H1 carries a `{#sec:<name>}` label (section registry in
-  `manuscript/SYNTAX.md`).
+  `docs/manuscript/SYNTAX.md`).
 - No figures or equations exist for this package.
 
 ## Gate-threshold tokens

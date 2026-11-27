@@ -1,7 +1,7 @@
 """Manuscript variable hydration for bond-coordinator.
 
 The manuscript identity (title, subtitle, codename, version, keywords) is
-loaded from ``manuscript/config.yaml`` — never hand-authored in prose.  Fleet
+loaded from ``docs/manuscript/config.yaml`` — never hand-authored in prose.  Fleet
 metrics (registry counts, coverage summary, lifecycle) are derived from the
 pure core (:mod:`bond_coordinator.registry`, :mod:`bond_coordinator.status`)
 so the manuscript can never drift from the code.
@@ -28,7 +28,7 @@ MISSION_LIFECYCLE = "brief → recon → plan → execute → debrief"
 
 
 def load_config(config_path: Path) -> dict[str, Any]:
-    """Load ``manuscript/config.yaml`` (raises :class:`FileNotFoundError`)."""
+    """Load ``docs/manuscript/config.yaml`` (raises :class:`FileNotFoundError`)."""
     if not Path(config_path).is_file():
         raise FileNotFoundError(f"manuscript config not found: {config_path}")
     with Path(config_path).open(encoding="utf-8") as handle:
@@ -103,7 +103,7 @@ def generate_variables(
     last = roster[-1] if roster else None
 
     return {
-        # Identity — from manuscript/config.yaml, never hand-authored in prose.
+        # Identity — from docs/manuscript/config.yaml, never hand-authored in prose.
         "CONFIG_TITLE": _paper_token(config, "title"),
         "CONFIG_SUBTITLE": _paper_token(config, "subtitle"),
         "CONFIG_VERSION": _paper_token(config, "version"),
@@ -152,7 +152,7 @@ def resolve_manuscript_tree(
     output_dir: Path | str,
     variables: dict[str, str],
 ) -> list[Path]:
-    """Substitute ``{{TOKEN}}`` in every ``manuscript/*.md`` template.
+    """Substitute ``{{TOKEN}}`` in every ``docs/manuscript/*.md`` template.
 
     Writes the resolved copies to ``output_dir`` and returns the written
     paths.  Unknown ``{{...}}`` tokens are left untouched (so unresolved

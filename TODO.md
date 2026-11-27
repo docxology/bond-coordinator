@@ -161,6 +161,8 @@ uv run pytest tests/ --cov=src --cov-report=term-missing --cov-fail-under=100
 
 ### Extension
 
+<a id="ledger-io-1"></a>
+
 #### `LEDGER-IO-1` — route ledger provenance through `bond-utilities` `mission_io`
 
 **Missing:** `MissionLedger.to_json` / `from_json` and the persistence in

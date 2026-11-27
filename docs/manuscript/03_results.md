@@ -1,6 +1,6 @@
 # Results {#sec:results}
 
-All figures in this section are generated from source by
+All numeric results in this section are generated from source by
 `src/bond_coordinator/manuscript_variables.py` and injected as substitution
 tokens — they are never hand-authored in prose.
 
@@ -48,29 +48,14 @@ infrastructure layers report readiness only where probed (layer 1 tracks the
 supplies readiness).  Every one of these counts is derived from the roster
 handed to the generator, never hand-authored.
 
-## Reconciliation against the real fleet
+## Reconciliation boundaries
 
-Reconciliation is the point where mission control stops asserting and starts
-measuring.  `scripts/reconcile.py` loads each built film's `MissionProvider`,
-reads its declared codename, harvests its gadget table, and hands plain data
-to the pure merge in `reconcile.py`.  Two properties are established by test
-rather than by inspection of a particular run, because the fleet's contents
-change as film packages are built:
-
-- **Per-film isolation is a positive control, not a promise.** A film that
-  raises on import is skipped individually — with its exception type and
-  message reported — while every other film still reconciles.  The test
-  materialises a film whose module raises at import time and asserts the run
-  still succeeds and still harvests its healthy neighbour.  This replaced a
-  guard narrow enough that one half-edited package aborted the fleet-wide run.
-- **No borrowed provenance.** A gadget's purpose is derived by
-  `reconcile.gadget_purpose`, which accepts a docstring only from payloads
-  that syntactically carry one (routines, classes, modules), takes a string
-  payload as the film's own words, and otherwise emits a factual shape
-  summary.  Reading `payload.__doc__` unconditionally instead resolves to the
-  *builtin type's* docstring for plain data, recording CPython's own strings
-  as purposes the film never declared.  A parametrised test asserts the
-  derived purpose differs from `payload.__doc__` for every plain-data shape.
+The standalone replay does not measure reconciliation across the suite.
+The coordinator's merge logic accepts package declarations as data and uses
+replacement semantics when a declaration changes. For plain-data records,
+the interpreter's built-in type documentation provides no evidence of what
+a package author declared. The merge therefore distinguishes declared text
+from a derived description of the data's shape.
 
 ## Ledger and status behaviour
 
@@ -90,7 +75,7 @@ deterministically and asserted byte-identical across repeated builds.
 
 ## Summary table (live-generated)
 
-Every figure below is injected from the registry/ledger by
+Every value below is injected from the registry/ledger by
 `src/bond_coordinator/manuscript_variables.py` — none is hand-authored.
 
 | Metric | Value |
@@ -102,11 +87,17 @@ Every figure below is injected from the registry/ledger by
 | Enforced coverage floor | {{GATE_COVERAGE_FLOOR}} |
 | Default staleness threshold | {{GATE_STALE_DAYS}} days |
 | Roster span | `{{REGISTRY_FIRST_SLUG}}` ({{REGISTRY_FIRST_YEAR}}) → `{{REGISTRY_LAST_SLUG}}` ({{REGISTRY_LAST_YEAR}}) |
+Table: Registry roster and reporting configuration. {#tbl:registry-roster}
+
+| Metric | Value |
+|---|---|
 | Measured coverage (known / at-or-above floor / mean) | {{REGISTRY_COVERAGE_KNOWN}} / {{REGISTRY_COVERAGE_AT_90}} / {{REGISTRY_COVERAGE_MEAN}} |
 | Status counts (scaffolded / building / ready / red) | {{REGISTRY_SCAFFOLDED}} / {{REGISTRY_BUILDING}} / {{REGISTRY_READY}} / {{REGISTRY_RED}} |
 | Blocked / stale packages | {{REGISTRY_BLOCKED_COUNT}} / {{REGISTRY_STALE_COUNT}} |
 | Audit-trail entries (fresh ledger) | {{LEDGER_TRANSITION_TOTAL}} |
 
+Table: Status counts and initial ledger summary. {#tbl:status-counts}
+
 Provenance of the status and coverage columns:
 *{{REGISTRY_MEASUREMENT_SOURCE}}* — read the Limitations section
-(§[sec:limitations]) before interpreting them as claims about any film.
+(“Limitations and Uncertainty”) before interpreting them as claims about any film.

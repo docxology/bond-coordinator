@@ -41,26 +41,9 @@ reproducibility-in-computational-research guidance of
 
 ## Verification
 
-The certification commands (identical to the enforced gates) are:
-
-```bash
-uv run pytest tests/ --cov=src --cov-fail-under=90
-uv run ruff check src/bond_coordinator scripts
-uv run mypy src/bond_coordinator scripts
-```
-
-The availability of the Layer-1 package (`bond-api`) is detected at runtime by
-a `importlib.util.find_spec` probe in `scripts/` and reported in the status and
-situation-room output.  The probe measures *importability in this
-environment*, not whether the package exists, and the rendered wording says so:
-a false result reads "not importable in this environment (pure-core mirror in
-use)".  The pure core never depends on the result — it works from its own
-protocol mirror either way (`docs/architecture.md`).
-
-Reconciliation against the live fleet is likewise reproducible in the sense
-that matters for a fleet of independently developed packages: it is
-*order-independent and partial-failure-tolerant*.  Each film is imported under
-its own guard, so a film that raises at import is skipped with its exception
-type and message on stderr while every other film still reconciles, and the
-harvest merge is idempotent (re-registering a `(film, gadget)` pair replaces
-it, so repeated runs converge on the same table).
+The standalone publication replay hydrates from the checked-in registry and
+uses the pinned Template renderer. The focused local checks cover the
+configuration, manuscript tokens, registry, ledger, and status aggregation.
+The seed replay includes no aggregate gate measurements or sibling-package
+imports. It cannot certify the readiness or coverage of the larger suite.
+See the rendering guide for exact commands and artifact locations.

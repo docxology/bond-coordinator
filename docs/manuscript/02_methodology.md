@@ -11,8 +11,7 @@ filesystem (persisting the ledger, writing the dashboard, printing the report).
 
 `registry.py` defines a frozen `PackageRecord` (rank, slug, film, year,
 codename, status, coverage, concepts) and the module-level `ROSTER` tuple of
-all {{REGISTRY_TOTAL}} film packages, in Eon-canon order then non-Eon, exactly per `SCOPE.md`
-§2.1.  Status is the enum `scaffolded | building | ready | red`; coverage is a
+all {{REGISTRY_TOTAL}} film packages, in Eon-canon order followed by the non-Eon entries.  Status is the enum `scaffolded | building | ready | red`; coverage is a
 measured percentage or `None`.  Mission codenames are **assigned by mission
 control** from each film's canonical plot element (e.g. Goldfinger's Operation
 Grand Slam → `GRAND SLAM`) and are provisional until a film package declares
@@ -108,7 +107,7 @@ combination of status and phase, and a **per-layer summary**:
 - planning while still scaffolded is blocked.
 
 **Per-layer summaries** render the declared suite topology
-(`SUITE_LAYERS`, §2.2 of `SCOPE.md`) as one `LayerSummary` per layer — the
+(`SUITE_LAYERS` in `status.py`) as one `LayerSummary` per layer — the
 five infrastructure layers (`layer0`…`layer4`), each with a readiness
 tri-state, plus the `films` layer aggregating the registry: tracked count,
 READY count, and mean coverage.  Readiness is injectable via `layer_ready`

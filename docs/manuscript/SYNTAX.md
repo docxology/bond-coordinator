@@ -3,7 +3,7 @@
 Project-specific overlay on the canonical `docs/guides/manuscript-semantics.md`
 guide, which ships with the template workspace and not with this standalone
 repository; local token plumbing is documented in
-[`docs/rendering_pipeline.md`](../docs/rendering_pipeline.md).
+[`docs/rendering_pipeline.md`](../rendering_pipeline.md).
 This file documents the **bond-coordinator**-specific section labels and the
 `{{TOKEN}}` table.  The coordinator defines no figures and no equations (it is
 an infrastructure/mission-control package), so those registries are absent.
@@ -75,7 +75,7 @@ track the code.
 
 The authoritative source of truth is the return value of
 `generate_variables()`; `tests/test_manuscript_variables.py` cross-checks the
-real `manuscript/config.yaml`, and
+real [`config.yaml`](config.yaml), and
 `TestManuscriptCrossReference::test_every_prose_token_is_generated` is a live
 gate asserting every `{{TOKEN}}` used in a numbered section is actually
 produced.
@@ -100,5 +100,5 @@ Files assemble in lexicographic order: `00_` abstract … `07_` scope, then
 ## See Also
 
 - [`AGENTS.md`](AGENTS.md) — manuscript editing protocol.
-- [`../docs/architecture.md`](../docs/architecture.md) — module boundaries.
-- [`../docs/syntax_guide.md`](../docs/syntax_guide.md) — token conventions.
+- [`../architecture.md`](../architecture.md) — module boundaries.
+- [`../syntax_guide.md`](../syntax_guide.md) — token conventions.

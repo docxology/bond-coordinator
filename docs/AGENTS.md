@@ -20,7 +20,7 @@ hard constraint, not a suggestion; the read-first entry point is
 1. `agent_instructions.md` — start here.
 2. `architecture.md` — boundaries before touching files.
 3. `testing_philosophy.md` — before writing/modifying tests.
-4. `syntax_guide.md` — before editing manuscript/tokens.
+4. `syntax_guide.md` — before editing docs/manuscript/tokens.
 5. `style_guide.md` — before writing source.
 
 ## REQUIRED vs AESTHETIC
@@ -30,5 +30,5 @@ hard constraint, not a suggestion; the read-first entry point is
 | `src/bond_coordinator/*.py` | REQUIRED | coverage gate + ruff + mypy |
 | `tests/*` | REQUIRED | 90% coverage gate |
 | `scripts/*.py` | REQUIRED | ruff + mypy + smoke tests |
-| `manuscript/config.yaml` | REQUIRED | `generate_variables` identity tokens |
+| `docs/manuscript/config.yaml` | REQUIRED | `generate_variables` identity tokens |
 | `docs/*` | convention | cross-references resolve |

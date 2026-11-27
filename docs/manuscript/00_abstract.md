@@ -9,7 +9,7 @@ exemplar demonstrated optimization mathematics inside a single package,
 aggregate suite-status report, and a self-contained HTML situation room.
 
 The registry (`src/bond_coordinator/registry.py`) is seeded from the ROSTER
-conventions in `projects/working/bond/SCOPE.md` §2.1 and assigns a provisional
+conventions encoded in the package registry and assigns a provisional
 mission codename per film; `reconcile.py` merges a film's real codename and
 gadget table over it (refresh/replace semantics) once a film declares them via
 `bond-api`.  The ledger (`src/bond_coordinator/ledger.py`) tracks each
@@ -36,3 +36,7 @@ Provenance of those status and coverage figures:
 measurement of any film package; see the Results section.
 
 **Keywords:** {{CONFIG_KEYWORDS}}
+
+The standalone publication replay uses the local registry only. Its status
+labels are initialization values. All sibling-package coverage is unknown,
+and the fresh ledger describes the initial registry state.

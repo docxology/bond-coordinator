@@ -26,7 +26,8 @@ modifying any project file.  It is the gate for the other documents.
 | [`troubleshooting.md`](troubleshooting.md) | Symptom-driven recipes. |
 | [`faq.md`](faq.md) | Common questions (no figures, seed vs. measured status, codenames, deps). |
 | [`forking_guide.md`](forking_guide.md) | Own-git / standalone-repo / boundary contract. |
-| [`rendering_pipeline.md`](rendering_pipeline.md) | Manuscript token hydration (no pixel pipeline here). |
+| [`rendering_pipeline.md`](rendering_pipeline.md) | Seeded manuscript hydration and pinned PDF/HTML replay. |
+| [`manuscript/`](manuscript/) | Ordered manuscript source, identity, and bibliography. |
 
 ## Key conventions
 

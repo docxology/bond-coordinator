@@ -14,7 +14,7 @@ validation_gates:
   - determinism
 figure_types: []
 citation_policy: official_or_scholarly
-source_policy: "Coordinator derives all fleet counts from src/bond_coordinator and manuscript/config.yaml; status/coverage are only ever updated from measured gate output, never hand-asserted."
+source_policy: "Coordinator derives all fleet counts from src/bond_coordinator and docs/manuscript/config.yaml; status/coverage are only ever updated from measured gate output, never hand-asserted."
 review_gates:
   - registry_completeness
   - ledger_transition_rules

@@ -1,33 +1,35 @@
-# Manuscript Pipeline — bond-coordinator
+# Standalone manuscript replay
 
-The coordinator's manuscript is light by design: it carries the exemplar's
-`manuscript/` surface (identity config + numbered sections + `{{TOKEN}}`
-injection) but produces **no figures and no equations**.  The pixel-rendering
-pipeline that the exemplar demonstrated (Pandoc → XeLaTeX via the template's
-`infrastructure/rendering`) is out of scope for this package and will be
-supplied by fleet rendering tooling later.
+The ordered source, identity, and bibliography live in [docs/manuscript](manuscript/).
+The standalone replay reports the checked-in registry and initializes a fresh
+ledger. The scaffolded labels are defaults and all sibling-package coverage
+is unknown. It uses no gate manifest, provider discovery, or sibling imports.
 
-## Token hydration (the part that runs here)
+Install Python 3.14, uv, Pandoc 3.14, compatible pandoc-crossref v0.3.26b, and
+XeLaTeX with the [Template prerequisites](https://github.com/docxology/template/tree/87704feae0a4490ef7dad9c931d268e8c30273c2#prerequisites).
+Set `COORDINATOR_CHECKOUT` to the absolute path of a committed checkout.
 
-1. `src/bond_coordinator/manuscript_variables.py::generate_variables` reads
-   identity from `manuscript/config.yaml` (`paper:`, `mission:`) and derives
-   fleet counts from the pure-core registry/ledger.
-2. `scripts/z_generate_manuscript_variables.py` writes the resolved map to
-   `output/data/manuscript_variables.json` and substitutes `{{TOKEN}}` in every
-   `manuscript/*.md` template into `output/manuscript/*.md` via
-   `resolve_manuscript_tree`.
-3. Unknown `{{...}}` tokens are left in place (grep-able) so incomplete
-   hydration is always detectable.
+```sh
+git clone https://github.com/docxology/template.git coordinator-template-runner
+cd coordinator-template-runner
+git checkout --detach 87704feae0a4490ef7dad9c931d268e8c30273c2
+uv sync --locked --python 3.14
+project=projects/working/bond-coordinator
+mkdir -p projects/working
+git -C "$COORDINATOR_CHECKOUT" worktree add --detach "$PWD/$project" HEAD
+uv run python "$project/scripts/z_generate_manuscript_variables.py" --no-gate-manifest
+uv run python scripts/pipeline/stage_03_render.py --project working/bond-coordinator --skip-manuscript-hydration
+uv run python scripts/pipeline/stage_04_validate.py --project working/bond-coordinator
+```
 
-## No analysis-output gate
+Manual hydration fixes the data source to the seed. It writes the resolved
+variable mapping to `output/data/manuscript_variables.json` and the rendered
+Markdown inputs to `output/manuscript/`. Template writes the PDF, HTML, and
+validation reports under `output/pdf/`, `output/web/`, and `output/reports/`.
 
-`generate_variables(..., require_outputs=...)` accepts the flag for pipeline
-parity but never gates on generated files — there is no `output/data/*.csv`
-dependency.  This is the one intentional divergence from the exemplar's strict
-analysis-to-manuscript contract; see `manuscript/05_experimental_setup.md`.
+For the local seed-related code checks, run from the coordinator checkout
+with its test dependencies installed.
 
-## Unresolved-token check
-
-```bash
-rg -l "\{\{" output/manuscript/ || echo "All tokens resolved"
+```sh
+uv run pytest tests/test_manuscript_variables.py tests/test_registry.py tests/test_status.py tests/test_ledger.py
 ```
