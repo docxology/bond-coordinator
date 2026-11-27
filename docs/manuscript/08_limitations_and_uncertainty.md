@@ -98,6 +98,6 @@ insist on stating those explicitly in every rendered artifact rather than
 quantifying them, because a spurious precision here would be the most
 misleading output the package could produce.
 
-The reproducibility bar is documented in §[sec:reproducibility] and follows
+The reproducibility bar is documented in “Reproducibility Certification” and follows
 the reproducibility-in-research-software guidance of
 [@sandve2013tensimplerules; @peng2011reproducibleresearch].

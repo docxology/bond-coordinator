@@ -6,13 +6,13 @@
 (Layer 2).  It records, audits, and reports on the 27 film packages; it
 implements no film algorithms.
 
-## Why is there no `experiment:` block in manuscript/config.yaml?
+## Why is there no `experiment:` block in docs/manuscript/config.yaml?
 
 The coordinator has no analysis outputs to gate on.  `generate_variables(...,
 require_outputs=...)` accepts the flag for pipeline parity but never gates on
 generated files — a deliberate divergence from the exemplar's strict
 analysis-to-manuscript contract (documented in
-`docs/architecture.md` and `manuscript/05_experimental_setup.md`).
+`docs/architecture.md` and `docs/manuscript/05_experimental_setup.md`).
 
 ## Why does the shipped `ROSTER` say `scaffolded` / `coverage=None`?
 
@@ -58,7 +58,7 @@ orchestrator, which converts them to plain data first.  The mirror is a
 boundary, not a placeholder.  `bond-utilities` (Layer 0) **is built** too — its
 `mission_io` module holds the fleet's provenance-record conventions — but this
 package has not adopted it: the ledger still uses local stdlib JSON codecs, and
-routing it through Layer 0 is open work (see `TODO.md#ledger-io-1`).
+routing it through Layer 0 is open work (see [ledger I/O backlog](../TODO.md#ledger-io-1)).
 
 ## The status report says `dependency_ready: false`. Is bond-api missing?
 
@@ -84,4 +84,4 @@ for the other 26.  See the positive control in
 ## Are there figures?
 
 No.  The coordinator has no plotting; the manuscript defines no figures and no
-equations (see `manuscript/SYNTAX.md`).
+equations (see `docs/manuscript/SYNTAX.md`).

@@ -68,7 +68,7 @@ gracefully — see "Consuming the bond-api MissionProvider" below.
   into one self-contained, HTML-escaped document: per-package table with
   mission-timeline bars and coverage heat, suite-layers table, per-film gadget
   groups, and a recent-transitions audit tail.
-- **`manuscript_variables.py`** — identity from `manuscript/config.yaml`,
+- **`manuscript_variables.py`** — identity from `docs/manuscript/config.yaml`,
   fleet counts from registry/status, `{{TOKEN}}` map + tree resolution.
 
 ## Consuming the bond-api MissionProvider
@@ -124,7 +124,7 @@ imports.  It is a boundary, not a placeholder: the mirror stays even though
 The exemplar's strict *analysis → manuscript-variables* contract is relaxed:
 the coordinator has no analysis outputs, so `generate_variables` never gates
 on generated files (`require_outputs` is accepted for parity only).  Documented
-in `manuscript/05_experimental_setup.md`.
+in `docs/manuscript/05_experimental_setup.md`.
 
 ## How to add a capability
 
@@ -133,4 +133,4 @@ in `manuscript/05_experimental_setup.md`.
 2. Expose it through `__init__.py`.
 3. Test it with real data (≥90%, zero mocks), covering error paths.
 4. Add a thin `scripts/` wrapper only if it needs argv/file I/O.
-5. Update this file, `src/AGENTS.md`, `README.md`, and `manuscript/SYNTAX.md`.
+5. Update this file, `src/AGENTS.md`, `README.md`, and `docs/manuscript/SYNTAX.md`.

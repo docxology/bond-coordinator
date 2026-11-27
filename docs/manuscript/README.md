@@ -1,4 +1,4 @@
-# manuscript/
+# docs/manuscript/
 
 Publication-shaped manuscript for `bond-coordinator`.
 
@@ -16,4 +16,4 @@ Publication-shaped manuscript for `bond-coordinator`.
 The coordinator produces **no figures and no equations**; it is an
 infrastructure/mission-control package.  Hydrate tokens with
 `uv run python scripts/z_generate_manuscript_variables.py` (writes
-`output/manuscript/*.md`).  See `docs/rendering_pipeline.md` for the flow.
+`output/manuscript/*.md`).  See [rendering guide](../rendering_pipeline.md) for the flow.

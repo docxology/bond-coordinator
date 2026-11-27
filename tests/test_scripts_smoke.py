@@ -284,7 +284,7 @@ class TestAdvanceMission:
 
 class TestGenerateManuscriptVariables:
     @pytest.mark.skipif(
-        not (PROJECT_ROOT / "manuscript" / "config.yaml").is_file(),
+        not (PROJECT_ROOT / "docs" / "manuscript" / "config.yaml").is_file(),
         reason="requires the real manuscript config",
     )
     def test_hydrates_manuscript_tree(self) -> None:
@@ -307,7 +307,7 @@ class TestGenerateManuscriptVariables:
         assert "MISSION CONTROL" in abstract
 
     @pytest.mark.skipif(
-        not (PROJECT_ROOT / "manuscript" / "config.yaml").is_file(),
+        not (PROJECT_ROOT / "docs" / "manuscript" / "config.yaml").is_file(),
         reason="requires the real manuscript config",
     )
     def test_measured_manifest_hydrates_measured_tokens(self, tmp_path: Path) -> None:

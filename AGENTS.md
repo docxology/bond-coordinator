@@ -27,7 +27,7 @@ for agents live in [`docs/agent_instructions.md`](docs/agent_instructions.md) �
 | `scripts/` | Thin orchestrators: argv parsing, file I/O, `bond-api` provider discovery + availability probe. May import `bond_coordinator`. Cross-package reads are guarded per film with `except Exception` and reported on stderr — one broken sibling must never abort a fleet-wide run. |
 | `tests/` | Zero-mock, real-data. Deterministic 5-film fixture in `conftest.py`; full-registry completeness assertions as well. |
 
-Enforced by `docs/architecture.md` and the `manuscript/layer_contract.yaml`.
+Enforced by `docs/architecture.md` and the `docs/manuscript/layer_contract.yaml`.
 
 ## Overview
 
@@ -61,7 +61,7 @@ Enforced by `docs/architecture.md` and the `manuscript/layer_contract.yaml`.
   provisional registry with refresh/replace semantics; `gadget_purpose` derives
   a gadget's one-line purpose from its payload without ever borrowing a
   builtin's docstring.
-- **Manuscript variables**: identity from `manuscript/config.yaml` + registry
+- **Manuscript variables**: identity from `docs/manuscript/config.yaml` + registry
   counts, roster span, and enforced-gate thresholds injected as `{{TOKEN}}`s —
   never hand-authored in prose.
 - **Zero-mock, ≥90%** (`--cov-fail-under=90` on `src/`), ruff + mypy clean.
@@ -89,7 +89,7 @@ tests/
     conftest.py             5-film deterministic fixture + fixed clock
     test_registry.py test_ledger.py test_status.py test_situation.py test_reconcile.py test_gates.py
     test_manuscript_variables.py test_scripts_smoke.py
-manuscript/                 config.yaml identity + 10 numbered sections (00-08, 99_references) with {{TOKEN}} injection
+docs/manuscript/                 config.yaml identity + 10 numbered sections (00-08, 99_references) with {{TOKEN}} injection
 docs/                       agent-facing rulebook (read-first: agent_instructions.md)
 output/                     gitignored generated artifacts (indicative only)
 ```
@@ -182,7 +182,7 @@ uv run pytest tests/ --cov=src --cov-report=term-missing
 
 - `docs/agent_instructions.md` — read-first behavioral rules.
 - `docs/architecture.md`, `docs/testing_philosophy.md` — boundaries + test bar.
-- `manuscript/config.yaml` + `manuscript/SYNTAX.md` — identity + `{{TOKEN}}` table.
+- `docs/manuscript/config.yaml` + `docs/manuscript/SYNTAX.md` — identity + `{{TOKEN}}` table.
 - `src/bond_coordinator/registry.py` — the `ROSTER` literal this registry
   reports (the fleet-level `SCOPE.md` is a sibling-workspace document, not
   shipped here).

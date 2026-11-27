@@ -23,7 +23,7 @@ from bond_coordinator import (
 from tests.conftest import SAMPLE_SLUGS
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-REAL_CONFIG = PROJECT_ROOT / "manuscript" / "config.yaml"
+REAL_CONFIG = PROJECT_ROOT / "docs" / "manuscript" / "config.yaml"
 
 MINIMAL_CONFIG = {
     "paper": {
@@ -279,7 +279,7 @@ class TestManuscriptCrossReference:
 
         variables = generate_variables(REAL_CONFIG)
         used: set[str] = set()
-        sections = sorted(PROJECT_ROOT.glob("manuscript/[0-9]*.md"))
+        sections = sorted(PROJECT_ROOT.glob("docs/manuscript/[0-9]*.md"))
         assert sections, "no numbered prose sections found"
         for section in sections:
             text = section.read_text(encoding="utf-8")

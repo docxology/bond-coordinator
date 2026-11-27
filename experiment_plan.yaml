@@ -32,8 +32,8 @@ protocol: "Run the zero-mock deterministic suite over a 5-film fixture plus full
 
 expected_figures: []
 expected_tables:
-  - registry_roster
-  - status_counts
+  - tbl:registry-roster
+  - tbl:status-counts
 
 baselines:
   - registry_completeness

@@ -78,7 +78,7 @@ module".
 ## Rule 6: Style and Syntax Guides Govern Their Domains
 
 - [`style_guide.md`](style_guide.md) governs `src/` and `scripts/`.
-- [`syntax_guide.md`](syntax_guide.md) governs `manuscript/*.md`.
+- [`syntax_guide.md`](syntax_guide.md) governs `docs/manuscript/*.md`.
 
 ## Rule 7: `output/` Is Disposable
 
