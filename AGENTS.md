@@ -1,5 +1,8 @@
 # AGENTS.md — bond-coordinator
 
+The [package maintenance guide](docs/package-maintenance.md) records the
+distribution identity, Python selection, dependency provenance, and citation metadata.
+
 **Mission control for the BOND suite** · codename **MISSION CONTROL** ·
 Layer 2 of a 33-package fleet (27 film packages + 6 mission-infrastructure
 packages).  This package is the authoritative **registry and situation room**:

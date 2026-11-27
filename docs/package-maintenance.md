@@ -1,8 +1,9 @@
 # Maintain the bond-coordinator package
 
-[Project metadata](../pyproject.toml) declares the package identity and Python
-compatibility (`>=3.11`). [The lockfile](../uv.lock) records resolved
-dependencies. Compare these two files when checking package metadata.
+The distribution at this revision is `bond-coordinator` 0.1.0, with
+Python compatibility `>=3.11`. This checkout has no `.python-version` pin. Check the declared range when choosing an interpreter.
+[Project metadata](../pyproject.toml) declares the package and compatibility.
+[The lockfile](../uv.lock) records resolved dependency versions and sources.
 
 ## Dependency provenance
 
