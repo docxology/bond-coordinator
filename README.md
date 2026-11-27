@@ -1,6 +1,7 @@
 # bond-coordinator — mission control for the BOND suite
 
-See [package maintenance](docs/package-maintenance.md) for dependency and citation records.
+For the distribution version, checkout Python selection, dependency sources,
+and citation records, see [package maintenance](docs/package-maintenance.md).
 
 **Codename: MISSION CONTROL**
 
